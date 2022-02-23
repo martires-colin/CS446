@@ -1,6 +1,6 @@
-# Colin Martires
-# CS446 Programming Assignment 1
-# 2/18/2022
+#Program Name: cmartires_examine_system.py
+#Author: Colin Martires
+#Purpose: Programming Assignment 1
 
 f = open("cmartires_systemDetails.txt", "w")
 f.close()
