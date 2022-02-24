@@ -1,3 +1,5 @@
 ls
 clear
+cd ../pa1
+file1.txt file2.txt file3.c
 you did it Colin!

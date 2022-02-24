@@ -32,12 +32,14 @@ int main(int argc, char *argv[])
 	FILE *inputFS = NULL;
 	FILE *redirectionFS = NULL;
 
+	char* parsed[100];
+	int numArgs;
+
 	if(argc == 1)									//interactive mode
 	{
 		batchmode = false;
 		promptUser(batchmode);
-
-
+		//input stream file pointer needs to be set equal to input from terminal
 	}
 	else if(argc == 2)								//batch mode
 	{
@@ -49,8 +51,14 @@ int main(int argc, char *argv[])
 			while(!feof(inputFS))
 			{
 				fgets(lines, 150, inputFS);
-				puts(lines);
-			}	
+				numArgs = parseInput(lines, parsed);	//parse arguments from command line
+				for(int i = 0; i < numArgs; i++)
+				{
+					printf("%s ", parsed[i]);
+				}
+				printf("\n");
+			}
+
 		}
 		else										//file doesn't exist
 		{
@@ -63,9 +71,6 @@ int main(int argc, char *argv[])
 		printError();
 		return 1;
 	}
-
-
-
 
 
 
@@ -101,6 +106,11 @@ int parseInput(char *input, char *splitWords[])
 	}
 
 	return wordInd;
+}
+
+char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits)
+{
+	
 }
 
 
