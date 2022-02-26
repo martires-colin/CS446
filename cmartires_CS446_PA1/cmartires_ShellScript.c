@@ -3,8 +3,8 @@
 //Purpose: Programming Assignment 1
 
 //TODO:
-//input stream file pointer needs to be set equal to input from terminal - potentially use fgets with stdin?
-
+// - input stream file pointer needs to be set equal to input from terminal - potentially use fgets with stdin?
+// - executeCommand
 
 #include <stdio.h>
 #include <string.h>
@@ -23,7 +23,7 @@ void promptUser(bool isBatch);
 void printError();
 int parseInput(char *input, char *splitwords[]);
 char *redirectCommand(char *special, char *line, bool *isRedirect, char *tokens[], char *outputTokens[]);
-//char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits);
+char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits);
 char getLetter(char *str, int index);
 bool exitProgram(char *tokens[], int numTokens);
 void launchProcesses(char *tokens[], int numTokens, bool isRedirect);
@@ -31,48 +31,65 @@ void changeDirectories(char *tokens[], int numTokens);
 
 int main(int argc, char *argv[])
 {
-	bool batchmode;
+	bool batchmode, exit;
+
+	//???
 	FILE *outputFS = NULL;
 	FILE *inputFS = NULL;
 	FILE *redirectionFS = NULL;
 
 	char* parsed[100];
+	char* outputTokens[100]; //???
 	char userCmds[30];
 	int numArgs;
-	bool *isRe;
+	bool *isRe, *isExit;
 
 	if(argc == 1)										//interactive mode
 	{
 		batchmode = false;
-		promptUser(batchmode);
-		fgets(userCmds, 30, stdin);						//read in user's commands
-		numArgs = parseInput(userCmds, parsed);
-		
-		/*	testing block
-		printf("entered commands: %s\n", userCmds);
 
-		for(int i = 0; i < numArgs; i++)
+		while(true)														//loop until user exits
 		{
-			printf("%s\n", parsed[i]);
+			promptUser(batchmode);										//prompt user
+			fgets(userCmds, 30, stdin);									//read in user's commands
+			char *cmdWhole = strdup(userCmds);							//save commands before parsing
+			numArgs = parseInput(userCmds, parsed);						//parse commands
+			printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
+			printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
+			for(int i = 0; i < numArgs; i++)
+			{
+				printf("%s\n", parsed[i]);
+			}
+			exit = exitProgram(parsed, numArgs);						//check for exit command
+
+			//PROCESS KILLER
+			if(exit == true)											//exit option, kills process
+			{
+				pid_t shellPID = getpid();
+				printf("Exiting program with PID: %d\n", shellPID);
+				kill(shellPID, SIGKILL);
+			}
+
+
+
 		}
-		printf("\n");
-		printf("1st token: %s\n", parsed[0]);
+
 		//input stream file pointer needs to be set equal to input from terminal - potentially use fgets with stdin?
+
+//------------------------testing-------------------------------//
+	
+		/*executeCommand(cmdWhole, isRe, parsed, outputTokens, isExit);
+		if(*isRe == true)
+		{
+			printf("True");
+		}
+		else
+		{
+			printf("False");
+		}*/
 		
-		//executeCommand(">", isRe);
-		// if(*isRe == true)
-		// {
-		// 	printf("True");
-		// }
-		// else
-		// {
-		// 	printf("False");
-		// }
-
-		exitProgram(parsed, numArgs);
-
-
-		*/	//end testing block
+//--------------------------------------------------------------//
+	
 	}
 	else if(argc == 2)									//batch mode
 	{
@@ -90,7 +107,6 @@ int main(int argc, char *argv[])
 				}
 				printf("\n");
 			}
-
 		}
 		else											//file doesn't exist
 		{
@@ -98,11 +114,11 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 	}
-	else
+	else												//error, too many arguments
 	{
-		printError();									//error, too many arguments
+		printError();
 		return 1;
-	}
+	} 
 
 
 	return 0;
@@ -117,7 +133,6 @@ void promptUser(bool isBatch)
 		gethostname(host, HOST_NAME_MAX + 1);
 		getcwd(cwd, sizeof(cwd));
 		printf("%s@%s:%s$ ", user, host, cwd);
-
 	}
 }
 
@@ -134,37 +149,49 @@ int parseInput(char *input, char *splitWords[])
 	{
 		splitWords[++wordInd] = strtok(NULL, " ");
 	}
-
 	return wordInd;
 }
 
-// char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits)
-// {
-// 	char *outFileName = "";
+char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits)
+{
+	int numTokens = parseInput(cmd, outputTokens);
 
-// 	char *cmdDup = strdup(cmd);
-// 	strcat(cmdDup, "\n");
+	char *outFileName = "";
 
-// 	//test strdup
-// 	//printf("%s", cmdDup);
+	char *cmdDup = strdup(cmd);
+	strcat(cmdDup, "\n");
 
-// 	if(strchr(cmdDup, '>') != NULL)						//check if command is Redirect
-// 	{
-// 		*isRedirect = true;
-// 		//call redirectCommand
-// 	}
-// 	else
-// 	{
-// 		*isRedirect = false;
-// 		//call exitProgram
-// 		//return the output file name
-// 	}
-// 	//otherwise, call changeDirectories, printHelp, and launchProcesses, and return the output file name
+	//test strdup
+	//printf("%s", cmdDup);
 
+	if(strchr(cmdDup, '>') != NULL)						//check if command is Redirect
+	{
+		*isRedirect = true;
+		//call redirectCommand
+	}
+	else
+	{
+		*isRedirect = false;
+		//numTokens = parseInput(cmd, outputTokens);		//parseInput, storing number of returned tokens
+		if(numTokens == 0)
+		{
+			return outFileName;
+		}
+	}
 
+	if(outFileName == NULL)
+	{
+		*isExits = exitProgram(tokens, numTokens);
+		if(*isExits == true)
+		{
+			return outFileName;
+		}
 
+	}
 
-// }
+	//otherwise, call changeDirectories, printHelp, and launchProcesses, and return the output file name
+	return outFileName;
+ }
 
 bool exitProgram(char *tokens[], int numTokens)
 {
