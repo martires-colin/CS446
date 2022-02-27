@@ -24,7 +24,8 @@ void printError();
 int parseInput(char *input, char *splitwords[]);
 char *redirectCommand(char *special, char *line, bool *isRedirect, char *tokens[], char *outputTokens[]);
 char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits);
-char getLetter(char *str, int index);
+//char getLetter(char *str, int index);
+void printHelp(char *tokens[], int numTokens);
 bool exitProgram(char *tokens[], int numTokens);
 void launchProcesses(char *tokens[], int numTokens, bool isRedirect);
 void changeDirectories(char *tokens[], int numTokens);
@@ -75,7 +76,7 @@ int main(int argc, char *argv[])
 				kill(shellPID, SIGKILL);
 			}
 
-
+			//check if redirect command is called
 			if(isRe == true)
 			{
 				printf("Redirected (from main)\n");
@@ -175,18 +176,44 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	//printf("cmdDup from executeCommand: %s", cmdDup);	//-----verify inputs-----
 
 
-	if(strchr(cmdDup, '>') != NULL)						//check if command is Redirect
+	if(strchr(cmdDup, '>') != NULL)						//redirect command
 	{
 		*isRedirect = (bool)true;
-		printf("You typed > :)\n");
+		*isExits = (bool)false;
+		//printf("You typed > :)\n");
 		//call redirectCommand
 	}
+	else if(strstr(cmdDup, "help") != NULL)				//help command
+	{
+		*isRedirect = (bool)false;
+		*isExits = (bool)false;
+		printHelp(tokens, numTokens);
+	}
+	else if(strstr(cmdDup, "exit") != NULL)				//exit command
+	{
+		*isRedirect = (bool)false;
+		*isExits = exitProgram(tokens, numTokens);
+	}
+	else if(strstr(cmdDup, "cd") != NULL)				//cd command
+	{
+		*isRedirect = (bool)false;
+		*isExits = (bool)false;
+		//call changeDirectories
+	}
+	else												//command not found
+	{
+		printf("Command not found\n");
+		printError();
+	}
+	
+
+
+	/*
 	else												//if strchr returns NULL
 	{
 		*isRedirect = (bool)false;
-		if(numTokens == 0)								//parseInput, storing number of returned tokens
+		if(numTokens == 0)								//if 0 tokens, return outFileName
 		{
-			printf("there are no tokens\n");
 			return outFileName;
 		}
 
@@ -196,9 +223,9 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 			return outFileName;
 		}
 
-		printf("you didn't type > :(\n");
-	}
-	//otherwise, call changeDirectories, printHelp, and launchProcesses, and return the output file name
+		//printf("you didn't type > :(\n");
+	}*/
+	//!!!otherwise, call changeDirectories, printHelp, and launchProcesses, and return the output file name
 	
 	return outFileName;
  }
@@ -217,6 +244,28 @@ bool exitProgram(char *tokens[], int numTokens)
 		}
 		else return true;
 	} else return false;
+}
+
+void printHelp(char *tokens[], int numTokens)
+{
+	if((strcmp(tokens[0], "help\n") == 0) || (strcmp(tokens[0], "help") == 0))		//check for both 'exit\n' and 'exit'
+	{
+		if(numTokens != 1)
+		{
+			printError();
+		}
+		else
+		{
+			printf("\nColin's example linux shell.\n"
+					"These shell commands are defined internally.\n"
+					"help -prints this screen so you can see available shell commands.\n"
+					"cd -changes directories to specified path; if not given, defaults to home.\n"
+					"exit -closes the example shell.\n"
+					"[input] > [output] -pipes input file into output file.\n\n"
+					"And more! If it's not explicitly defined here (or in the documentation for the assignment), then the command should try to be executed by launchProcesses.\n"
+					"That's how we get ls -la to work here!\n\n");
+		}
+	}
 }
 
 
