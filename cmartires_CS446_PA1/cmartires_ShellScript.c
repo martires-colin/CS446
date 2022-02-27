@@ -38,11 +38,11 @@ int main(int argc, char *argv[])
 	FILE *inputFS = NULL;
 	FILE *redirectionFS = NULL;
 
-	char* parsed[100];
+	char* parsed[100], *cmdWhole;
 	char* outputTokens[100]; //???
 	char userCmds[30];
 	int numArgs;
-	bool *isRe, *isExit;
+	bool isRe, isExit;
 
 	if(argc == 1)										//interactive mode
 	{
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 		{
 			promptUser(batchmode);										//prompt user
 			fgets(userCmds, 30, stdin);									//read in user's commands
-			char *cmdWhole = strdup(userCmds);							//save commands before parsing
+			cmdWhole = strdup(userCmds);							//save commands before parsing
 			numArgs = parseInput(userCmds, parsed);						//parse commands
 			printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
 			printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
@@ -60,16 +60,30 @@ int main(int argc, char *argv[])
 			{
 				printf("%s\n", parsed[i]);
 			}
-			exit = exitProgram(parsed, numArgs);						//check for exit command
+
+			executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);
+
+
+			//exit = exitProgram(parsed, numArgs);						//check for exit command
+			// ^ maybe use *isExit instead of exit
 
 			//PROCESS KILLER
-			if(exit == true)											//exit option, kills process
+			if(isExit == true)											//exit option, kills process
 			{
 				pid_t shellPID = getpid();
 				printf("Exiting program with PID: %d\n", shellPID);
 				kill(shellPID, SIGKILL);
 			}
 
+
+			if(isRe == true)
+			{
+				printf("Redirected (from main)\n");
+			}
+			else
+			{
+				printf("Not redirected (from main)\n");
+			}
 
 
 		}
@@ -78,15 +92,7 @@ int main(int argc, char *argv[])
 
 //------------------------testing-------------------------------//
 	
-		/*executeCommand(cmdWhole, isRe, parsed, outputTokens, isExit);
-		if(*isRe == true)
-		{
-			printf("True");
-		}
-		else
-		{
-			printf("False");
-		}*/
+
 		
 //--------------------------------------------------------------//
 	
@@ -154,65 +160,63 @@ int parseInput(char *input, char *splitWords[])
 
 char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits)
 {
-	int numTokens = parseInput(cmd, outputTokens);
-
 	char *outFileName = "";
 
-	char *cmdDup = strdup(cmd);
+	char* cmdWhole = strdup(cmd);
+	int numTokens = parseInput(cmd, outputTokens);
+
+	//printf("numTokens: %d\n", numTokens);
+
+	char *cmdDup = strdup(cmdWhole);
 	strcat(cmdDup, "\n");
 
 	//test strdup
-	//printf("%s", cmdDup);
+	//printf("cmd from executeCommand: %s", cmdWhole);	//-----verify inputs-----
+	//printf("cmdDup from executeCommand: %s", cmdDup);	//-----verify inputs-----
+
 
 	if(strchr(cmdDup, '>') != NULL)						//check if command is Redirect
 	{
-		*isRedirect = true;
+		*isRedirect = (bool)true;
+		printf("You typed > :)\n");
 		//call redirectCommand
 	}
-	else
+	else												//if strchr returns NULL
 	{
-		*isRedirect = false;
-		//numTokens = parseInput(cmd, outputTokens);		//parseInput, storing number of returned tokens
-		if(numTokens == 0)
+		*isRedirect = (bool)false;
+		if(numTokens == 0)								//parseInput, storing number of returned tokens
 		{
+			printf("there are no tokens\n");
 			return outFileName;
 		}
-	}
 
-	if(outFileName == NULL)
-	{
 		*isExits = exitProgram(tokens, numTokens);
 		if(*isExits == true)
 		{
 			return outFileName;
 		}
 
+		printf("you didn't type > :(\n");
 	}
-
 	//otherwise, call changeDirectories, printHelp, and launchProcesses, and return the output file name
+	
 	return outFileName;
  }
 
 bool exitProgram(char *tokens[], int numTokens)
 {
-	if(numTokens == 1)
+	if((strcmp(tokens[0], "exit\n") == 0) || (strcmp(tokens[0], "exit") == 0))		//check for both 'exit\n' and 'exit'
 	{
-		if(strcmp(tokens[0], "exit\n") == 0)
+		//printf("You typed exit\n");
+		//printf("numTokens: %d\n", numTokens);
+		if(numTokens != 1)
 		{
-			printf("you typed exit!\n");
-			return true;
-		}
-		else
-		{
-			printf("you didn't type exit :(\n");
+			//printf("Too many arguments\n");
+			printError();
 			return false;
 		}
-	}
-	else
-	{
-		printError();										//error, too many arguments
-		return false;
-	}
+		else return true;
+	} else return false;
 }
 
 
