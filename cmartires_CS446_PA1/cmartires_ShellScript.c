@@ -3,6 +3,7 @@
 //Purpose: Programming Assignment 1
 
 //TODO:
+// - batch mode !!!!
 // - input stream file pointer needs to be set equal to input from terminal - potentially use fgets with stdin?
 // - executeCommand
 
@@ -22,7 +23,7 @@
 void promptUser(bool isBatch);
 void printError();
 int parseInput(char *input, char *splitwords[]);
-char *redirectCommand(char *cmdWhole, char *line, bool *isRedirect, char *tokens[], char *outputTokens[], int numTokens);
+char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens);
 char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits);
 //char getLetter(char *str, int index);
 void printHelp(char *tokens[], int numTokens);
@@ -38,8 +39,6 @@ int main(int argc, char *argv[])
 	FILE *outputFS = NULL;
 	FILE *inputFS = NULL;
 	FILE *redirectionFS = NULL;
-
-
 
 	char *parsed[100], *cmdWhole, *outFileName;
 	char *outputTokens[100]; //???
@@ -57,18 +56,14 @@ int main(int argc, char *argv[])
 			fgets(userCmds, 30, stdin);									//read in user's commands
 			cmdWhole = strdup(userCmds);							//save commands before parsing
 			numArgs = parseInput(userCmds, parsed);						//parse commands
-			printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
-			printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
-			for(int i = 0; i < numArgs; i++)
-			{
-				printf("%s\n", parsed[i]);
-			}
+			//printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
+			//printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
+			//for(int i = 0; i < numArgs; i++)
+			//{
+			//	printf("%s\n", parsed[i]);
+			//}
 
 			outFileName = executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);		//handle commands
-			if(isRe == true)
-			{
-				printf("Successfully copied contents from %s to %s\n", parsed[0], parsed[2]);
-			}
 
 			//exit = exitProgram(parsed, numArgs);						//check for exit command
 			// ^ maybe use *isExit instead of exit
@@ -84,13 +79,8 @@ int main(int argc, char *argv[])
 			//check if redirect command is called
 			if(isRe == true)
 			{
-				printf("Redirected (from main)\n");
+				printf("Successfully copied contents from %s to %s\n", parsed[0], parsed[2]);
 			}
-			else
-			{
-				printf("Not redirected (from main)\n");
-			}
-
 
 		}
 
@@ -183,54 +173,36 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	{
 		*isRedirect = (bool)true;
 		*isExits = (bool)false;
-		//printf("You typed > :)\n");
-		//call redirectCommand
-		outFileName = redirectCommand(cmdDup, cmdDup, isRedirect, tokens, outputTokens, numTokens);
-
+		outFileName = redirectCommand(isRedirect, tokens, numTokens);
 	}
-	else if(strstr(cmdDup, "help") != NULL)				//help command
+	//strstr(cmdDup, "help") != NULL
+	else if(strcmp(tokens[0], "help\n") == 0)				//help command
 	{
 		*isRedirect = (bool)false;
 		*isExits = (bool)false;
 		printHelp(tokens, numTokens);
 	}
-	else if(strstr(cmdDup, "exit") != NULL)				//exit command
+	//strstr(cmdDup, "exit") != NULL
+	else if(strcmp(tokens[0], "exit\n") == 0)				//exit command
 	{
 		*isRedirect = (bool)false;
 		*isExits = exitProgram(tokens, numTokens);
 	}
-	else if(strstr(cmdDup, "cd") != NULL)				//cd command
+	//strstr(cmdDup, "cd") != NULL
+	else if(strcmp(tokens[0], "cd") == 0)				//cd command
 	{
 		*isRedirect = (bool)false;
 		*isExits = (bool)false;
 		//call changeDirectories
+		changeDirectories(tokens, numTokens);
 	}
 	else												//command not found
 	{
 		printf("Command(s) not found\n");
+		*isRedirect = (bool)false;
+		*isExits = (bool)false;
 		printError();
 	}
-	
-
-
-	/*
-	else												//if strchr returns NULL
-	{
-		*isRedirect = (bool)false;
-		if(numTokens == 0)								//if 0 tokens, return outFileName
-		{
-			return outFileName;
-		}
-
-		*isExits = exitProgram(tokens, numTokens);
-		if(*isExits == true)
-		{
-			return outFileName;
-		}
-
-		//printf("you didn't type > :(\n");
-	}*/
-	
 	return outFileName;
  }
 
@@ -272,19 +244,12 @@ void printHelp(char *tokens[], int numTokens)
 	}
 }
 
-char *redirectCommand(char *cmdWhole, char *line, bool *isRedirect, char *tokens[], char *outputTokens[], int numTokens)
+char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 {
 	char *outFileName = "";	
 	char contents;
 
 	FILE *fpIN, *fpOUT;
-
-	printf("cmd from redirect: %s\n", cmdWhole);
-	printf("Parsed Tokens (from Redirect):\n");									//----verifying parsed tokens-temporary check
-	for(int i = 0; i < numTokens; i++)
-	{
-		printf("[%d] %s\n", i, tokens[i]);
-	}
 
 	if(strlen(tokens[1]) != 1)										//too many >'s
 	{
@@ -295,14 +260,12 @@ char *redirectCommand(char *cmdWhole, char *line, bool *isRedirect, char *tokens
 	}
 	else
 	{
-		
-
 		fpIN = fopen(tokens[0], "r");								//open input file for reading
 		if(fpIN == NULL)
 		{
-			printf("%s: Cannot open file\n", tokens[0]);
+			printf("%s: No such file or directory\n", tokens[0]);
 			printError();
-			fclose(fpIN);
+			*isRedirect = (bool)false;
 			return outFileName;
 		}
 
@@ -311,7 +274,7 @@ char *redirectCommand(char *cmdWhole, char *line, bool *isRedirect, char *tokens
 		{
 			printf("%s: Cannot open file\n", tokens[2]);
 			printError();
-			fclose(fpOUT);
+			*isRedirect = (bool)false;
 			return outFileName;
 		}
 
@@ -330,7 +293,21 @@ char *redirectCommand(char *cmdWhole, char *line, bool *isRedirect, char *tokens
 	return outFileName;
 }
 
+void changeDirectories(char *tokens[], int numTokens)
+{
+	char cwd[100], dest[100] = "";
+	printf("%s\n", getcwd(cwd, 100));
 
+	printf("called cd\n");
+
+	strcat(dest, "/");
+	strcat(dest, tokens[1]);
+	printf("destination: %s\n", dest);
+
+	chdir("pas");
+	printf("%s\n", getcwd(cwd, 100));
+}
+//once we change directories, we exit the directory that contains the program
 
 
 
