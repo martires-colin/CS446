@@ -169,7 +169,7 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	//printf("cmdDup from executeCommand: %s", cmdDup);	//-----verify inputs-----
 
 
-	if(strchr(cmdDup, '>') != NULL)						//redirect command
+	if(strchr(cmdDup, '>') != NULL)							//redirect command
 	{
 		*isRedirect = (bool)true;
 		*isExits = (bool)false;
@@ -189,14 +189,14 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 		*isExits = exitProgram(tokens, numTokens);
 	}
 	//strstr(cmdDup, "cd") != NULL
-	else if(strcmp(tokens[0], "cd") == 0)				//cd command
+	else if(strcmp(tokens[0], "cd") == 0)					//cd command
 	{
 		*isRedirect = (bool)false;
 		*isExits = (bool)false;
 		//call changeDirectories
 		changeDirectories(tokens, numTokens);
 	}
-	else												//command not found
+	else													//command not found
 	{
 		printf("Command(s) not found\n");
 		*isRedirect = (bool)false;
@@ -295,19 +295,17 @@ char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 
 void changeDirectories(char *tokens[], int numTokens)
 {
-	char cwd[100], dest[100] = "";
-	printf("%s\n", getcwd(cwd, 100));
-
-	printf("called cd\n");
-
-	strcat(dest, "/");
-	strcat(dest, tokens[1]);
-	printf("destination: %s\n", dest);
-
-	chdir("pas");
-	printf("%s\n", getcwd(cwd, 100));
+	char *dest, cwd[100];
+	int status;
+	
+	dest = tokens[1];
+	dest[strlen(dest) - 1] = '\0';							//formatting
+	status = chdir(dest);
+	if(status != 0)
+	{
+		perror("Error");	
+	}
 }
-//once we change directories, we exit the directory that contains the program
 
 
 
