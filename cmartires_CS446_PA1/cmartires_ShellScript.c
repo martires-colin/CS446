@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 			//check if redirect command is called
 			if(isRe == true)
 			{
-				printf("Successfully copied contents from %s to %s\n", parsed[0], parsed[2]);
+				printf("Successfully copied contents from %s to %s\n", parsed[1], parsed[3]);
 			}
 
 		}
@@ -121,6 +121,16 @@ int main(int argc, char *argv[])
 		printError();
 		return 1;
 	} 
+
+
+//------------------------//
+	// free(cmdWhole);
+	// free(outFileName);
+	// free(userCmds);
+
+
+//------------------------//
+
 
 
 	return 0;
@@ -168,8 +178,9 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	//printf("cmd from executeCommand: %s", cmdWhole);	//-----verify inputs-----
 	//printf("cmdDup from executeCommand: %s", cmdDup);	//-----verify inputs-----
 
-
-	if(strchr(cmdDup, '>') != NULL)							//redirect command
+	//strcmp(tokens[1], ">") == 0  ---> this method causes a seg fault LOL
+	//strchr(cmdDup, '>') != NULL
+	if((strchr(cmdDup, '>') != NULL) && (strcmp(tokens[0], "cat") == 0))	//redirect command
 	{
 		*isRedirect = (bool)true;
 		*isExits = (bool)false;
@@ -193,7 +204,6 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	{
 		*isRedirect = (bool)false;
 		*isExits = (bool)false;
-		//call changeDirectories
 		changeDirectories(tokens, numTokens);
 	}
 	else													//command not found
@@ -251,7 +261,7 @@ char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 
 	FILE *fpIN, *fpOUT;
 
-	if(strlen(tokens[1]) != 1)										//too many >'s
+	if(strlen(tokens[2]) != 1)										//too many >'s
 	{
 		printf("Too many >'s\n");
 		printError();
@@ -260,7 +270,7 @@ char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 	}
 	else
 	{
-		fpIN = fopen(tokens[0], "r");								//open input file for reading
+		fpIN = fopen(tokens[1], "r");								//open input file for reading
 		if(fpIN == NULL)
 		{
 			printf("%s: No such file or directory\n", tokens[0]);
@@ -269,7 +279,7 @@ char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 			return outFileName;
 		}
 
-		fpOUT = fopen(tokens[2], "w");								//open output file for writing
+		fpOUT = fopen(tokens[3], "w");								//open output file for writing
 		if(fpOUT == NULL)
 		{
 			printf("%s: Cannot open file\n", tokens[2]);
@@ -289,7 +299,7 @@ char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 		fclose(fpOUT);
 	}
 
-	outFileName = tokens[2];
+	outFileName = tokens[3];
 	return outFileName;
 }
 
