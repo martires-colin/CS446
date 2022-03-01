@@ -28,7 +28,7 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 //char getLetter(char *str, int index);
 void printHelp(char *tokens[], int numTokens);
 bool exitProgram(char *tokens[], int numTokens);
-void launchProcesses(char *tokens[], int numTokens, bool isRedirect);
+void launchProcesses(char *tokens[], int numTokens, bool *status);
 void changeDirectories(char *tokens[], int numTokens);
 
 int main(int argc, char *argv[])
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
 	char *parsed[100], *cmdWhole, *outFileName;
 	char *outputTokens[100]; //???
-	char userCmds[30];
+	char userCmds[100];
 	int numArgs;
 	bool isRe, isExit;
 
@@ -53,15 +53,15 @@ int main(int argc, char *argv[])
 		while(true)														//loop until user exits
 		{
 			promptUser(batchmode);										//prompt user
-			fgets(userCmds, 30, stdin);									//read in user's commands
+			fgets(userCmds, 100, stdin);									//read in user's commands
 			cmdWhole = strdup(userCmds);							//save commands before parsing
 			numArgs = parseInput(userCmds, parsed);						//parse commands
-			//printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
-			//printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
-			//for(int i = 0; i < numArgs; i++)
-			//{
-			//	printf("%s\n", parsed[i]);
-			//}
+			printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
+			printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
+			for(int i = 0; i < numArgs; i++)
+			{
+				printf("%s\n", parsed[i]);
+			}
 
 			outFileName = executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);		//handle commands
 
@@ -172,6 +172,8 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	strcat(cmdDup, "\n");	
 	int numTokens = parseInput(cmd, outputTokens);
 
+	bool status;
+
 	//printf("numTokens: %d\n", numTokens);
 
 	//test strdup
@@ -180,6 +182,7 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 
 	//strcmp(tokens[1], ">") == 0  ---> this method causes a seg fault LOL
 	//strchr(cmdDup, '>') != NULL
+
 	if((strchr(cmdDup, '>') != NULL) && (strcmp(tokens[0], "cat") == 0))	//redirect command
 	{
 		*isRedirect = (bool)true;
@@ -206,12 +209,23 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 		*isExits = (bool)false;
 		changeDirectories(tokens, numTokens);
 	}
-	else													//command not found
+	// else if((strstr(cmdDup, "ls") != NULL) && ((strcmp(tokens[0], "ls") == 0) || (strcmp(tokens[0], "ls\n") == 0)))		//there's probably a bug here
+	// {
+	// 	*isRedirect = (bool)false;
+	// 	*isExits = (bool)false;
+	// 	launchProcesses(tokens, numTokens, isRedirect, cmdDup);
+	// }
+	else																	//launch processes
 	{
-		printf("Command(s) not found\n");
-		*isRedirect = (bool)false;
-		*isExits = (bool)false;
-		printError();
+		launchProcesses(tokens, numTokens, &status);
+
+		if(status != 0)														//command not found
+		{
+			printf("Command(s) not found\n");
+			*isRedirect = (bool)false;
+			*isExits = (bool)false;
+			printError();
+		}
 	}
 	return outFileName;
  }
@@ -316,6 +330,24 @@ void changeDirectories(char *tokens[], int numTokens)
 		perror("Error");	
 	}
 }
+
+void launchProcesses(char *tokens[], int numTokens, bool *status)
+{
+	//probably need to fork the process first
+
+	//int status;
+	char *fix;									//fix last argument entry (remove '\n')
+	fix = tokens[numTokens - 1];
+	fix[strlen(fix) - 1] = '\0';
+	tokens[numTokens - 1] = fix;
+	tokens[numTokens + 1] = NULL;				//argument list must be NULL terminated
+
+	*status = execvp(tokens[0], tokens);
+
+	//printf("status: %d\n", status);
+}
+
+
 
 
 
