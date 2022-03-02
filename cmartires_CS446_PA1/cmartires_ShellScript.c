@@ -27,13 +27,11 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 //char getLetter(char *str, int index);
 void printHelp(char *tokens[], int numTokens);
 bool exitProgram(char *tokens[], int numTokens);
-int launchProcesses(char *tokens[], int numTokens, bool *status);
+void launchProcesses(char *tokens[], int numTokens, int *status);
 void changeDirectories(char *tokens[], int numTokens);
 
 int main(int argc, char *argv[])
 {
-	bool batchmode, exit;
-
 	//???
 	FILE *outputFS = NULL;
 	FILE *inputFS = NULL;
@@ -43,7 +41,8 @@ int main(int argc, char *argv[])
 	char *outputTokens[100]; //???
 	char userCmds[100];
 	int numArgs;
-	bool isRe, isExit;
+
+	bool batchmode, exit, isRe, isExit;
 
 	if(argc == 1)										//interactive mode
 	{
@@ -51,10 +50,9 @@ int main(int argc, char *argv[])
 
 		while(true)														//loop until user exits
 		{
-			//wait(NULL);
 			promptUser(batchmode);										//prompt user
-			fgets(userCmds, 100, stdin);									//read in user's commands
-			cmdWhole = strdup(userCmds);							//save commands before parsing
+			fgets(userCmds, 100, stdin);								//read in user's commands
+			cmdWhole = strdup(userCmds);								//preserve commands before parsing
 			numArgs = parseInput(userCmds, parsed);						//parse commands
 			// printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
 			// printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
@@ -66,16 +64,11 @@ int main(int argc, char *argv[])
 			pid_t shellPID = getpid();
 			outFileName = executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);		//handle commands
 
-			//exit = exitProgram(parsed, numArgs);						//check for exit command
-			// ^ maybe use *isExit instead of exit
-
 			//PROCESS KILLER
 			if(isExit == true)											//exit option, kills process
 			{
-				//wait(NULL);
 				printf("Exiting program with PID: %d\n", shellPID);
 				kill(shellPID, SIGKILL);
-				printf("after the kill\n");
 			}
 
 			//check if redirect command is called
@@ -157,22 +150,18 @@ int parseInput(char *input, char *splitWords[])
 
 char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits)
 {
-	char *outFileName = "";
+	char *outFileName = "";													//initialize outFileName
 
-	char* cmdDup = strdup(cmd);
+	char* cmdDup = strdup(cmd);												//preserve command before parsing
 	strcat(cmdDup, "\n");	
-	int numTokens = parseInput(cmd, outputTokens);
+	int numTokens = parseInput(cmd, outputTokens);							//parse command
 
-	bool status;
 
 	//printf("numTokens: %d\n", numTokens);
 
 	//test strdup
 	//printf("cmd from executeCommand: %s", cmdWhole);	//-----verify inputs-----
 	//printf("cmdDup from executeCommand: %s", cmdDup);	//-----verify inputs-----
-
-	//strcmp(tokens[1], ">") == 0  ---> this method causes a seg fault LOL
-	//strchr(cmdDup, '>') != NULL
 
 	if((strchr(cmdDup, '>') != NULL) && (strcmp(tokens[0], "cat") == 0))	//redirect command
 	{
@@ -181,20 +170,21 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 		outFileName = redirectCommand(isRedirect, tokens, numTokens);
 	}
 	//strstr(cmdDup, "help") != NULL
-	else if(strcmp(tokens[0], "help\n") == 0)				//help command
+	else if(strcmp(tokens[0], "help\n") == 0)								//help command
 	{
 		*isRedirect = (bool)false;
 		*isExits = (bool)false;
 		printHelp(tokens, numTokens);
 	}
 	//strstr(cmdDup, "exit") != NULL
-	else if(strcmp(tokens[0], "exit\n") == 0)				//exit command
+	else if(strcmp(tokens[0], "exit\n") == 0)								//exit command
 	{
 		*isRedirect = (bool)false;
 		*isExits = exitProgram(tokens, numTokens);
+
 	}
 	//strstr(cmdDup, "cd") != NULL
-	else if(strcmp(tokens[0], "cd") == 0)					//cd command
+	else if(strcmp(tokens[0], "cd") == 0)									//cd command
 	{
 		*isRedirect = (bool)false;
 		*isExits = (bool)false;
@@ -202,24 +192,10 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	}
 	else																	//launch processes
 	{
-		int isCommand = launchProcesses(tokens, numTokens, &status);
+		int procStatus;
+		launchProcesses(tokens, numTokens, &procStatus);
 		*isRedirect = (bool)false;
 		*isExits = (bool)false;
-
-
-		printf("status from execCmds: %d\n", isCommand);
-		if(isCommand == -1)														//command not found
-		{
-			printf("Command(s) not found\n");
-			printError();
-			//----------------
-			// pid_t shellPID = getpid();
-			// printf("Exiting program with PID: %d\n", shellPID);
-			// kill(shellPID, SIGKILL);
-		}
-		wait(NULL);
-
-
 	}
 	return outFileName;
  }
@@ -242,7 +218,7 @@ bool exitProgram(char *tokens[], int numTokens)
 
 void printHelp(char *tokens[], int numTokens)
 {
-	if((strcmp(tokens[0], "help\n") == 0) || (strcmp(tokens[0], "help") == 0))		//check for both 'exit\n' and 'exit'
+	if((strcmp(tokens[0], "help\n") == 0) || (strcmp(tokens[0], "help") == 0))		//check for both 'help\n' and 'help'
 	{
 		if(numTokens != 1)
 		{
@@ -255,7 +231,7 @@ void printHelp(char *tokens[], int numTokens)
 					"help -prints this screen so you can see available shell commands.\n"
 					"cd -changes directories to specified path; if not given, defaults to home.\n"
 					"exit -closes the example shell.\n"
-					"[input] > [output] -pipes input file into output file.\n\n"
+					"cat [input] > [output] -pipes input file into output file.\n\n"
 					"And more! If it's not explicitly defined here (or in the documentation for the assignment), then the command should try to be executed by launchProcesses.\n"
 					"That's how we get ls -la to work here!\n\n");
 		}
@@ -326,87 +302,50 @@ void changeDirectories(char *tokens[], int numTokens)
 	}
 }
 
-int launchProcesses(char *tokens[], int numTokens, bool *status)
+void launchProcesses(char *tokens[], int numTokens, int *status)
 {
-	int DEEZNUTSStatus;
+	int forkStatus;
 
-	char *fix;									//fix last argument entry (remove '\n')
+	char *fix;										//fix last argument entry (remove '\n')
 	fix = tokens[numTokens - 1];
 	fix[strlen(fix) - 1] = '\0';
 	tokens[numTokens - 1] = fix;
-	tokens[numTokens + 1] = NULL;				//argument list must be NULL terminated
+	tokens[numTokens + 1] = NULL;					//argument list must be NULL terminated
 
-
-
-
-	int fd[2];						//file decriptors for pipe | fd[0] = read, fd[1] = write
-	if(pipe(fd) == -1)
-	{
+	int fd[2];										//file decriptors for pipe | fd[0] = read, fd[1] = write
+	if(pipe(fd) == -1)								//create pipe to send execvp return value from child to parent process
+	{												//error checking
 		printError();
 		printf("Pipe error\n");
 	}
 
-	// if(childPID == -1)								//error checking
-	// {
-	// 	printError();
-	// 	printf("Forking error\n");
-	// }
-	
 	int childPID = fork();							//fork child process
+	if(childPID == -1)								//error checking
+	{
+		printError();
+		printf("Forking error\n");
+	}
+
 	if(childPID == 0)								//in the childprocess
 	{
 		close(fd[0]);
-		//-----
-		//printf("Input a number: ");
-        //scanf("%d", &execStatus);
-		//-----
-		DEEZNUTSStatus = execvp(tokens[0], tokens);
-		printf("DEEZ NUTS status CHILD: %d\n", DEEZNUTSStatus);
-		//int execStatus = -1;
+		forkStatus = execvp(tokens[0], tokens);
 		printf("Command(s) not found\n");
 		printError();
 		pid_t shellPID = getpid();
-		printf("Exiting program with PID: %d\n", shellPID);
 		kill(shellPID, SIGKILL);
-		write(fd[1], &DEEZNUTSStatus, sizeof(int));
+		write(fd[1], &forkStatus, sizeof(int));
 		close(fd[1]);
-		
-		//kill(childPID, SIGTERM);
 	}
-	else										//parent process, wait for child process to finish executing
+	else											//parent processwait for child process to finish executing
 	{
-		int waitStat;
-		waitpid(childPID, &waitStat, 0);
-		int lpStatus;										//TODO!!!!!!!!!!!!
+		wait(NULL);									//wait for child process to finish executing
+		int lpStatus;
 		close(fd[1]);
-		read(fd[0], &lpStatus, sizeof(int));		//find a way to save the status of execvp to send back to executeCmds
-																//figure out how to send -1 to parent process
-	
-		printf("FROM THE CHILD status: %d\n", lpStatus);
-		printf("PID: %d\n", childPID);
-		//printf("DEEZ NUTS status PARENT: %d\n", DEEZNUTSStatus);
-		// if(lpStatus == -1)
-		// {
-		// 	*status = (bool)false;
-		// 	printf("lpStatus: 0\n");
-		// }
-		// else
-		// {
-		// 	*status = (bool)true;
-		// 	printf("lpStatus: 1\n");
-		// }
+		read(fd[0], &lpStatus, sizeof(int));
 		close(fd[0]);
+		*status = lpStatus;							//store return value of execvp
 	}
-
-	// if(childPID != 0)
-	// {
-	wait(NULL);
-	// }
-	//printf("DEEZNUTS\n");
-	waitpid(childPID, NULL, WNOHANG);
-	//kill(childPID, SIGTERM);
-
-	return DEEZNUTSStatus;	
 }
 
 
