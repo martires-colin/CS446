@@ -104,6 +104,14 @@ int main(int argc, char *argv[])
 				}
 				printf("\n");
 			}
+
+
+
+
+
+
+
+
 		}
 		else											//file doesn't exist
 		{
@@ -254,6 +262,10 @@ char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 	}
 	else
 	{
+		char *fix;										//fix last argument entry (remove '\n')
+		fix = tokens[numTokens - 1];
+		fix[strlen(fix) - 1] = '\0';
+		tokens[numTokens - 1] = fix;
 		fpIN = fopen(tokens[1], "r");								//open input file for reading
 		if(fpIN == NULL)
 		{
