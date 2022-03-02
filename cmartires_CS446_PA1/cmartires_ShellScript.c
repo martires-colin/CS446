@@ -5,7 +5,6 @@
 //TODO:
 // - batch mode !!!!
 // - input stream file pointer needs to be set equal to input from terminal - potentially use fgets with stdin?
-// - executeCommand
 
 #include <stdio.h>
 #include <string.h>
@@ -45,6 +44,7 @@ int main(int argc, char *argv[])
 	char userCmds[100];
 	int numArgs;
 	bool isRe, isExit;
+	pid_t shellPID = getpid();
 
 	if(argc == 1)										//interactive mode
 	{
@@ -56,12 +56,12 @@ int main(int argc, char *argv[])
 			fgets(userCmds, 100, stdin);									//read in user's commands
 			cmdWhole = strdup(userCmds);							//save commands before parsing
 			numArgs = parseInput(userCmds, parsed);						//parse commands
-			printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
-			printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
-			for(int i = 0; i < numArgs; i++)
-			{
-				printf("%s\n", parsed[i]);
-			}
+			// printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
+			// printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
+			// for(int i = 0; i < numArgs; i++)
+			// {
+			// 	printf("%s\n", parsed[i]);
+			// }
 
 			outFileName = executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);		//handle commands
 
@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
 			//PROCESS KILLER
 			if(isExit == true)											//exit option, kills process
 			{
-				pid_t shellPID = getpid();
 				printf("Exiting program with PID: %d\n", shellPID);
 				kill(shellPID, SIGKILL);
 			}
@@ -121,17 +120,6 @@ int main(int argc, char *argv[])
 		printError();
 		return 1;
 	} 
-
-
-//------------------------//
-	// free(cmdWhole);
-	// free(outFileName);
-	// free(userCmds);
-
-
-//------------------------//
-
-
 
 	return 0;
 }
@@ -218,14 +206,22 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	else																	//launch processes
 	{
 		launchProcesses(tokens, numTokens, &status);
+		*isRedirect = (bool)false;
+		*isExits = (bool)false;
 
-		if(status != 0)														//command not found
+
+		//printf("status from execCmds: %d\n", status);
+		if(status == 0)														//command not found
 		{
 			printf("Command(s) not found\n");
-			*isRedirect = (bool)false;
-			*isExits = (bool)false;
 			printError();
 		}
+		else
+		{
+		//	printf("lp successfully executed\n");
+		}
+		
+
 	}
 	return outFileName;
  }
@@ -327,24 +323,79 @@ void changeDirectories(char *tokens[], int numTokens)
 	status = chdir(dest);
 	if(status != 0)
 	{
-		perror("Error");	
+		perror("Error");
+		printError();
 	}
 }
 
 void launchProcesses(char *tokens[], int numTokens, bool *status)
 {
-	//probably need to fork the process first
+	int lpStatus;
 
-	//int status;
 	char *fix;									//fix last argument entry (remove '\n')
 	fix = tokens[numTokens - 1];
 	fix[strlen(fix) - 1] = '\0';
 	tokens[numTokens - 1] = fix;
 	tokens[numTokens + 1] = NULL;				//argument list must be NULL terminated
 
-	*status = execvp(tokens[0], tokens);
+	int fd[2];						//file decriptors for pipe | fd[0] = read, fd[1] = write
+	if(pipe(fd) == -1)
+	{
+		printError();
+		printf("Pipe error\n");
+	}
 
-	//printf("status: %d\n", status);
+
+
+
+	int childPID = fork();							//fork child process
+	if(childPID == -1)								//error checking
+	{
+		printError();
+		printf("Forking error\n");
+	}
+	
+	if(childPID == 0)								//in the childprocess
+	{
+		close(fd[0]);
+		int execStatus = 0;
+		//-----
+		//printf("Input a number: ");
+        //scanf("%d", &execStatus);
+		//-----
+		execStatus = execvp(tokens[0], tokens);
+		if(write(fd[1], &execStatus, sizeof(int)) == -1)
+		{
+			printError();
+			printf("writing to pipe error\n");
+		}
+		close(fd[1]);
+	}
+	else										//parent process, wait for child process to finish executing
+	{
+		wait(NULL);
+		close(fd[1]);
+		int lpStatus;
+		if(read(fd[0], &lpStatus, sizeof(int)) == -1)
+		{
+			printError();
+			printf("reading from pipe error\n");
+		}
+		//printf("status: %d\n", lpStatus);
+		if(lpStatus == -1)
+		{
+			*status = (bool)false;
+		}
+		else
+		{
+			*status = (bool)true;
+		}
+		close(fd[0]);
+	}
+	//printf("Success\n");
+	//kill(childPID, SIGTERM);
+
+
 }
 
 
