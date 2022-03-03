@@ -1,8 +1,0 @@
-help
-cat batchf.txt > newfile.txt
-ls -la
-cd testing
-ls
-cd ..
-ls
-exit

@@ -51,22 +51,17 @@ int main(int argc, char *argv[])
 			pid_t shellPID = getpid();
 			outFileName = executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);		//handle commands
 
-			//PROCESS KILLER
+			//PROCESS TERMINATOR
 			if(isExit == true)											//exit option, kills process
 			{
-				printf("Exiting program with PID: %d\n", shellPID);
-				kill(shellPID, SIGKILL);
+				kill(shellPID, SIGTERM);
 			}
-
 			//check if redirect command is called
 			if(isRe == true)
 			{
 				printf("Successfully copied contents from %s to %s\n", parsed[1], parsed[3]);
 			}
-		}
-
-		//input stream file pointer needs to be set equal to input from terminal - potentially use fgets with stdin?
-	
+		}	
 	}
 	else if(argc == 2)									//batch mode
 	{
@@ -81,22 +76,18 @@ int main(int argc, char *argv[])
 				cmdWhole = strdup(lines);
 				numArgs = parseInput(lines, parsed);	//parse arguments from command line
 
-				//------------command execution block------------//
 				pid_t shellPID = getpid();
 				outFileName = executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);		//handle commands
-				//PROCESS KILLER
+				//PROCESS TERMINATOR
 				if(isExit == true)											//exit option, kills process
 				{
-					printf("Exiting program with PID: %d\n", shellPID);
-					kill(shellPID, SIGKILL);
+					kill(shellPID, SIGTERM);
 				}
 				//check if redirect command is called
 				if(isRe == true)
 				{
 					printf("Successfully copied contents from %s to %s\n", parsed[1], parsed[3]);
 				}
-				//-----------------------------------------------//
-
 			}
 		}
 		else											//file doesn't exist
@@ -122,7 +113,7 @@ void promptUser(bool isBatch)
 		user = getenv("LOGNAME");
 		gethostname(host, HOST_NAME_MAX + 1);
 		getcwd(cwd, sizeof(cwd));
-		printf("%s@%s:%s$ ", user, host, cwd);
+		printf("\n%s@%s:%s$ ", user, host, cwd);
 	}
 }
 
@@ -322,7 +313,7 @@ void launchProcesses(char *tokens[], int numTokens, int *status)
 		printf("Command(s) not found\n");
 		printError();
 		pid_t shellPID = getpid();
-		kill(shellPID, SIGKILL);
+		kill(shellPID, SIGKILL);					//kill the child process if execvp doesn't execute
 		write(fd[1], &forkStatus, sizeof(int));
 		close(fd[1]);
 	}

@@ -1,0 +1,38 @@
+1.	System calls are requests that a program makes to the kernel.
+	System calls allow the program to do things only accessible by the operating system.
+	The system calls I used in PA1 are:
+		- pipe, read, write, close (for piping information between processes)
+		- getpid
+		- fork
+		- execvp
+		- wait
+		- kill
+		- getcwd
+		- chdir
+
+2.	Both execvp and execve belong to the same family of functions, they just have different modifiers
+	The 'v' in both functions signifies that they accept a vector of arguments.
+	The 'p' in execvp denotes that the function uses the PATH environment variable to find the program.
+		- This allows us to commands like "ls" without having to specify the full path (/bin/ls).
+	The 'e' in execve allows the function to specify an environment for the process.
+
+3.	An alternative to 'kill' could be 'exit'. This system call terminates a calling process.
+	The 'kill' function's actual functionality is to send signals. In the shell script, I 
+	sent the SIGTERM to terminate the process. Other alternatives to this are
+	SIGKILL, SIGQUIT, SIGHUP, SIGINT. When terminating a process, we should always consider the child
+	processes that are dependent on the parent process. Using 'kill' is easier in this situation because
+	sending SIGTERM terminates the program 'politely'. If we used SIGKILL on the other hand, we'd be forcing
+	the program to terminate, which may cause bugs since this process can't be stopped.
+
+4.	An interesting bug I ecountered was that if I entered a command that was not recognized, it would be
+	passed into the launchProcesses function where a child process is created to run execvp. The problem was
+	that there was no way to check for every single possible command that would be accepted into execvp, so
+	the program had to run all the way up to when execvp was called. If execvp was successful, everything
+	worked fine, the child process would finish and control would be returned to the parent process.
+	On the other hand, if execvp was not successful, a bug occured where a child process would be created
+	and not complete until an exit command was called on it. This caused the problem where if I entered 
+	3 unrecognized commands, I'd have to call the exit command 3 times to kill the processes before I
+	could exit the program itself. I fixed this bug by adding another kill command within the child process
+	that only executes if execvp was unsuccessful. 
+	If I could redesign this program, I would add a function to handle unrecognized commands so that
+	child processes won't be created if they aren't needed.
