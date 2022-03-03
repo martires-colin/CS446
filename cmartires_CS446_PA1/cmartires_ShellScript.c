@@ -96,22 +96,28 @@ int main(int argc, char *argv[])
 			char lines[150];
 			while(!feof(inputFS))
 			{
+				
 				fgets(lines, 150, inputFS);
+				cmdWhole = strdup(lines);
 				numArgs = parseInput(lines, parsed);	//parse arguments from command line
-				for(int i = 0; i < numArgs; i++)
+
+				//------------command execution block------------//
+				pid_t shellPID = getpid();
+				outFileName = executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);		//handle commands
+				//PROCESS KILLER
+				if(isExit == true)											//exit option, kills process
 				{
-					printf("%s ", parsed[i]);
+					printf("Exiting program with PID: %d\n", shellPID);
+					kill(shellPID, SIGKILL);
 				}
-				printf("\n");
+				//check if redirect command is called
+				if(isRe == true)
+				{
+					printf("Successfully copied contents from %s to %s\n", parsed[1], parsed[3]);
+				}
+				//-----------------------------------------------//
+
 			}
-
-
-
-
-
-
-
-
 		}
 		else											//file doesn't exist
 		{
@@ -266,6 +272,7 @@ char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 		fix = tokens[numTokens - 1];
 		fix[strlen(fix) - 1] = '\0';
 		tokens[numTokens - 1] = fix;
+
 		fpIN = fopen(tokens[1], "r");								//open input file for reading
 		if(fpIN == NULL)
 		{
