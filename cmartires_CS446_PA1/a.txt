@@ -5,7 +5,4 @@ cd testing
 ls
 cd ..
 ls
-df
-w
-ls
 exit

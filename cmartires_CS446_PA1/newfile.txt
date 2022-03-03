@@ -1,4 +1,11 @@
 help
 cat batchf.txt > newfile.txt
 ls -la
+cd testing
+ls
+cd ..
+ls
+df
+w
+ls
 exit

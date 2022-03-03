@@ -2,10 +2,6 @@
 //Author: Colin Martires
 //Purpose: Programming Assignment 1
 
-//TODO:
-// - batch mode !!!!
-// - input stream file pointer needs to be set equal to input from terminal - potentially use fgets with stdin?
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,7 +20,6 @@ void printError();
 int parseInput(char *input, char *splitwords[]);
 char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens);
 char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTokens[], bool *isExits);
-//char getLetter(char *str, int index);
 void printHelp(char *tokens[], int numTokens);
 bool exitProgram(char *tokens[], int numTokens);
 void launchProcesses(char *tokens[], int numTokens, int *status);
@@ -32,19 +27,17 @@ void changeDirectories(char *tokens[], int numTokens);
 
 int main(int argc, char *argv[])
 {
-	//???
 	FILE *outputFS = NULL;
 	FILE *inputFS = NULL;
 	FILE *redirectionFS = NULL;
 
-	char *parsed[100], *cmdWhole, *outFileName;
-	char *outputTokens[100]; //???
+	char *parsed[100], *outputTokens[100], *cmdWhole, *outFileName;
 	char userCmds[100];
 	int numArgs;
 
 	bool batchmode, exit, isRe, isExit;
 
-	if(argc == 1)										//interactive mode
+	if(argc == 1)														//interactive mode
 	{
 		batchmode = false;
 
@@ -54,12 +47,6 @@ int main(int argc, char *argv[])
 			fgets(userCmds, 100, stdin);								//read in user's commands
 			cmdWhole = strdup(userCmds);								//preserve commands before parsing
 			numArgs = parseInput(userCmds, parsed);						//parse commands
-			// printf("\nEntered Commands: %s\n", cmdWhole);				//----verifying input---------temporary check
-			// printf("Parsed Tokens:\n");									//----verifying parsed tokens-temporary check
-			// for(int i = 0; i < numArgs; i++)
-			// {
-			// 	printf("%s\n", parsed[i]);
-			// }
 
 			pid_t shellPID = getpid();
 			outFileName = executeCommand(cmdWhole, &isRe, parsed, outputTokens, &isExit);		//handle commands
@@ -76,16 +63,9 @@ int main(int argc, char *argv[])
 			{
 				printf("Successfully copied contents from %s to %s\n", parsed[1], parsed[3]);
 			}
-
 		}
 
 		//input stream file pointer needs to be set equal to input from terminal - potentially use fgets with stdin?
-
-//------------------------testing-------------------------------//
-	
-
-		
-//--------------------------------------------------------------//
 	
 	}
 	else if(argc == 2)									//batch mode
@@ -170,34 +150,24 @@ char *executeCommand(char *cmd, bool *isRedirect, char* tokens[], char* outputTo
 	strcat(cmdDup, "\n");	
 	int numTokens = parseInput(cmd, outputTokens);							//parse command
 
-
-	//printf("numTokens: %d\n", numTokens);
-
-	//test strdup
-	//printf("cmd from executeCommand: %s", cmdWhole);	//-----verify inputs-----
-	//printf("cmdDup from executeCommand: %s", cmdDup);	//-----verify inputs-----
-
 	if((strchr(cmdDup, '>') != NULL) && (strcmp(tokens[0], "cat") == 0))	//redirect command
 	{
 		*isRedirect = (bool)true;
 		*isExits = (bool)false;
 		outFileName = redirectCommand(isRedirect, tokens, numTokens);
 	}
-	//strstr(cmdDup, "help") != NULL
 	else if(strcmp(tokens[0], "help\n") == 0)								//help command
 	{
 		*isRedirect = (bool)false;
 		*isExits = (bool)false;
 		printHelp(tokens, numTokens);
 	}
-	//strstr(cmdDup, "exit") != NULL
 	else if(strcmp(tokens[0], "exit\n") == 0)								//exit command
 	{
 		*isRedirect = (bool)false;
 		*isExits = exitProgram(tokens, numTokens);
 
 	}
-	//strstr(cmdDup, "cd") != NULL
 	else if(strcmp(tokens[0], "cd") == 0)									//cd command
 	{
 		*isRedirect = (bool)false;
@@ -268,7 +238,7 @@ char *redirectCommand(bool *isRedirect, char *tokens[], int numTokens)
 	}
 	else
 	{
-		char *fix;										//fix last argument entry (remove '\n')
+		char *fix;													//fix last argument entry (remove '\n')
 		fix = tokens[numTokens - 1];
 		fix[strlen(fix) - 1] = '\0';
 		tokens[numTokens - 1] = fix;
