@@ -201,7 +201,7 @@ void printHelp(char *tokens[], int numTokens)
 		}
 		else
 		{
-			printf("\nColin's example linux shell.\n"
+			printf("\nColin and Dustin's example linux shell.\n"
 					"These shell commands are defined internally.\n"
 					"help -prints this screen so you can see available shell commands.\n"
 					"cd -changes directories to specified path; if not given, defaults to home.\n"

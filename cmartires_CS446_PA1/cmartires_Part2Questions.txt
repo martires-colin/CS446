@@ -1,6 +1,6 @@
 1.	System calls are requests that a program makes to the kernel.
 	System calls allow the program to do things only accessible by the operating system.
-	The system calls I used in PA1 are:
+	The system calls we used in PA1 are:
 		- pipe, read, write, close (for piping information between processes)
 		- getpid
 		- fork
@@ -10,14 +10,14 @@
 		- getcwd
 		- chdir
 
-2.	Both execvp and execve belong to the same family of functions, they just have different modifiers
+2.	Both execvp and execve belong to the same family of functions, they just have different modifiers.
 	The 'v' in both functions signifies that they accept a vector of arguments.
 	The 'p' in execvp denotes that the function uses the PATH environment variable to find the program.
-		- This allows us to commands like "ls" without having to specify the full path (/bin/ls).
+		- This allows us to use commands like "ls" without having to specify the full path (/bin/ls).
 	The 'e' in execve allows the function to specify an environment for the process.
 
 3.	An alternative to 'kill' could be 'exit'. This system call terminates a calling process.
-	The 'kill' function's actual functionality is to send signals. In the shell script, I 
+	The 'kill' function's actual functionality is to send signals. In the shell script, we 
 	sent the SIGTERM to terminate the process. Other alternatives to this are
 	SIGKILL, SIGQUIT, SIGHUP, SIGINT. When terminating a process, we should always consider the child
 	processes that are dependent on the parent process. Using 'kill' is easier in this situation because
