@@ -5,7 +5,6 @@
 #Compare and contrast the two algorithms. Explain where each would be
 #appropriate and any possible tradeoffs in implementation or process execution
 
-from pickle import FALSE
 import sys
 import os.path
 
