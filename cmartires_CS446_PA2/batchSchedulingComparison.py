@@ -16,7 +16,7 @@ def main():
 		print('usage: batchSchedulingComparison.py <batchFile> <sortType>')
 		return 0
 	elif(os.path.exists(sys.argv[1]) == 0):
-		print('File Not Found')
+		print('[ERROR]: File Not Found')
 		return 0
 	elif((sys.argv[2] != 'FCFS') and (sys.argv[2] != 'ShortestFirst') and (sys.argv[2] != 'Priority')):
 		print('[Error]: Algorithm not recognized')
