@@ -7,9 +7,8 @@
 
 import sys
 import os.path
+import operator
 
-#def AverageTurnaround(processCompletionTimes, processArrivalTimes):
-	
 #class to store proces information
 class Process:
 	def __init__(self, PID, arrivalTime, burstTime, priority):
@@ -20,6 +19,18 @@ class Process:
 	
 	def __repr__(self):
 		return '[' + str(self.PID) + ', ' + str(self.arrivalTime) + ', ' + str(self.burstTime) + ', ' + str(self.priority) + ']'
+
+def AverageTurnaround(processCompletionTimes, processArrivalTimes):
+	processTurnaroundTimes = list(map(operator.sub, processCompletionTimes, processArrivalTimes))
+	turnaroundTime = sum(processTurnaroundTimes)
+	avgTurnaroundTime = turnaroundTime / len(processCompletionTimes)
+	return avgTurnaroundTime, processTurnaroundTimes
+	
+def AverageWait(processTurnaroundTimes, processBurstTime):
+	processWaitTimes = list(map(operator.sub, processTurnaroundTimes, processBurstTime))
+	waitTime = sum(processWaitTimes)
+	avgWaitTime = waitTime / len(processTurnaroundTimes)
+	return avgWaitTime
 
 def FirstComeFirstServedSort(batchFileData):
 	processes = []
@@ -32,9 +43,12 @@ def FirstComeFirstServedSort(batchFileData):
 	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.PID))
 	
 	PIDlist = []
+	ArrivalTimeList = []
+	BurstTimeList = []
 	for i in sortedProcesses:
 		PIDlist.append(i.PID)
-
+		ArrivalTimeList.append(i.arrivalTime)
+		BurstTimeList.append(i.burstTime)
 
 	completionTime = 0
 	completionTimeList = []
@@ -46,7 +60,7 @@ def FirstComeFirstServedSort(batchFileData):
 	# print(PIDlist)
 	# print(completionTimeList)
 
-	return PIDlist, completionTimeList
+	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
 
 
@@ -65,7 +79,6 @@ def main():
 		print('Algorithm Options: FCFS, ShortestFirst, Priority')
 		return 0
 
-
 	#read contents of batch file
 	batchFile = sys.argv[1]
 	batchFile = open(sys.argv[1], 'r')
@@ -75,11 +88,24 @@ def main():
 
 	#execute sorting algorithms
 	if(sys.argv[2] == 'FCFS'):
-		#FCFS stuff
-		print('You\'ve chosen FCFS')
-		PIDs, CompletionTimes = FirstComeFirstServedSort(data)
-		print(PIDs)					#checking results	
-		print(CompletionTimes)		#checking results
+		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = FirstComeFirstServedSort(data)	#call FirstComeFirstServedSort
+		
+		avgTurnaroundTime, TurnaroundTimes = AverageTurnaround(CompletionTimes, ArrivalTimes)
+		avgWaitTime = AverageWait(TurnaroundTimes, BurstTimes)
+
+		print('PIDs:',PIDs)								#checking results	
+		print('Completion Times:', CompletionTimes)		#checking results
+		print('Arrival Times:', ArrivalTimes)			#checking results
+		print('Burst Times:', BurstTimes)				#checking results
+		print('Turnaround Times:', TurnaroundTimes)		#checking results
+
+		print('FCFS Sort Statistics:')
+		print('PID ORDER OF EXECUTION')
+		for i in PIDs:
+			print(i)
+		#print('Each Processes\'s Turnaround Time:', processTurnaroundTimes)
+		print('Average Process Turnaround Time:', avgTurnaroundTime)
+		print('Average Process Wait Time:', avgWaitTime)
 
 	elif(sys.argv[2] == 'ShortestFirst'):
 		#ShortestFirst stuff
