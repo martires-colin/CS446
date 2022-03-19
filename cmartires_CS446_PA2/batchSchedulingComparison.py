@@ -62,6 +62,35 @@ def FirstComeFirstServedSort(batchFileData):
 
 	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
+def PrioritySort(batchFileData):
+	processes = []
+	for x in batchFileData:
+		tokens = x.split(', ')
+		tokens[3] = tokens[3].replace('\n', '')
+		processes.append(Process(int(tokens[0]), int(tokens[1]), int(tokens[2]), int(tokens[3])))
+	
+	#print(processes)
+	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.priority, z.PID))
+	
+	PIDlist = []
+	ArrivalTimeList = []
+	BurstTimeList = []
+	for i in sortedProcesses:
+		PIDlist.append(i.PID)
+		ArrivalTimeList.append(i.arrivalTime)
+		BurstTimeList.append(i.burstTime)
+
+	completionTime = 0
+	completionTimeList = []
+	for y in sortedProcesses:
+		completionTime += y.burstTime
+		completionTimeList.append(completionTime)
+
+	# print(sortedProcesses)
+	# print(PIDlist)
+	# print(completionTimeList)
+
+	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
 
 def main():
@@ -110,9 +139,25 @@ def main():
 	elif(sys.argv[2] == 'ShortestFirst'):
 		#ShortestFirst stuff
 		print('You\'ve chosen ShortestFirst')
-	elif(sys.argv[2] == 'Priority'):
-		#Priority stuff
-		print('You\'ve chosen Priority')
+	elif(sys.argv[2] == 'Priority'):				#tried to just copy FCFS, but avgWait seems to be incorrect
+		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = PrioritySort(data)	#call PrioritySort
+		
+		avgTurnaroundTime, TurnaroundTimes = AverageTurnaround(CompletionTimes, ArrivalTimes)
+		avgWaitTime = AverageWait(TurnaroundTimes, BurstTimes)
+
+		print('PIDs:',PIDs)								#checking results	
+		print('Completion Times:', CompletionTimes)		#checking results
+		print('Arrival Times:', ArrivalTimes)			#checking results
+		print('Burst Times:', BurstTimes)				#checking results
+		print('Turnaround Times:', TurnaroundTimes)		#checking results
+
+		print('Priority Sort Statistics:')
+		print('PID ORDER OF EXECUTION')
+		for i in PIDs:
+			print(i)
+		#print('Each Processes\'s Turnaround Time:', processTurnaroundTimes)
+		print('Average Process Turnaround Time:', avgTurnaroundTime)
+		print('Average Process Wait Time:', avgWaitTime)
 
 if __name__ == '__main__':
 	main()
