@@ -26,11 +26,12 @@ def AverageTurnaround(processCompletionTimes, processArrivalTimes):
 	avgTurnaroundTime = turnaroundTime / len(processCompletionTimes)
 	return avgTurnaroundTime, processTurnaroundTimes
 	
-def AverageWait(processTurnaroundTimes, processBurstTime):
-	processWaitTimes = list(map(operator.sub, processTurnaroundTimes, processBurstTime))
+def AverageWait(processTurnaroundTimes, processBurstTimes):
+	processWaitTimes = list(map(operator.sub, processTurnaroundTimes, processBurstTimes))
+	print('Process Wait Times: ', processWaitTimes)   #check results (remove after)
 	waitTime = sum(processWaitTimes)
 	avgWaitTime = waitTime / len(processTurnaroundTimes)
-	return avgWaitTime
+	return avgWaitTime, processWaitTimes
 
 def FirstComeFirstServedSort(batchFileData):
 	processes = []
@@ -45,15 +46,13 @@ def FirstComeFirstServedSort(batchFileData):
 	PIDlist = []
 	ArrivalTimeList = []
 	BurstTimeList = []
+	completionTimeList = []
+	completionTime = 0
 	for i in sortedProcesses:
 		PIDlist.append(i.PID)
 		ArrivalTimeList.append(i.arrivalTime)
 		BurstTimeList.append(i.burstTime)
-
-	completionTime = 0
-	completionTimeList = []
-	for y in sortedProcesses:
-		completionTime += y.burstTime
+		completionTime += i.burstTime
 		completionTimeList.append(completionTime)
 
 	# print(sortedProcesses)
@@ -75,15 +74,13 @@ def PrioritySort(batchFileData):
 	PIDlist = []
 	ArrivalTimeList = []
 	BurstTimeList = []
+	completionTimeList = []
+	completionTime = 0
 	for i in sortedProcesses:
 		PIDlist.append(i.PID)
 		ArrivalTimeList.append(i.arrivalTime)
 		BurstTimeList.append(i.burstTime)
-
-	completionTime = 0
-	completionTimeList = []
-	for y in sortedProcesses:
-		completionTime += y.burstTime
+		completionTime += i.burstTime
 		completionTimeList.append(completionTime)
 
 	# print(sortedProcesses)
@@ -120,9 +117,9 @@ def main():
 		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = FirstComeFirstServedSort(data)	#call FirstComeFirstServedSort
 		
 		avgTurnaroundTime, TurnaroundTimes = AverageTurnaround(CompletionTimes, ArrivalTimes)
-		avgWaitTime = AverageWait(TurnaroundTimes, BurstTimes)
+		avgWaitTime, WaitTimes = AverageWait(TurnaroundTimes, BurstTimes)
 
-		print('PIDs:',PIDs)								#checking results	
+		print('PIDs:',PIDs)								#checking results(remove after)
 		print('Completion Times:', CompletionTimes)		#checking results
 		print('Arrival Times:', ArrivalTimes)			#checking results
 		print('Burst Times:', BurstTimes)				#checking results
@@ -143,13 +140,17 @@ def main():
 		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = PrioritySort(data)	#call PrioritySort
 		
 		avgTurnaroundTime, TurnaroundTimes = AverageTurnaround(CompletionTimes, ArrivalTimes)
-		avgWaitTime = AverageWait(TurnaroundTimes, BurstTimes)
+		avgWaitTime, WaitTimes = AverageWait(TurnaroundTimes, BurstTimes)
 
-		print('PIDs:',PIDs)								#checking results	
+		print('PIDs:',PIDs)								#checking results(remove after)
 		print('Completion Times:', CompletionTimes)		#checking results
 		print('Arrival Times:', ArrivalTimes)			#checking results
 		print('Burst Times:', BurstTimes)				#checking results
 		print('Turnaround Times:', TurnaroundTimes)		#checking results
+
+	#idk if i need this
+		for j in data:
+			print(j, '(', CompletionTimes, ') (', TurnaroundTimes, ') (', WaitTimes, ')')
 
 		print('Priority Sort Statistics:')
 		print('PID ORDER OF EXECUTION')
