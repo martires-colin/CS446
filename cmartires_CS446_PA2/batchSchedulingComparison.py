@@ -2,12 +2,13 @@
 #Author: Colin Martires
 #Purpose: Programming Assignment 2
 
-#Compare and contrast the two algorithms. Explain where each would be
+#Compare and contrast the three algorithms. Explain where each would be
 #appropriate and any possible tradeoffs in implementation or process execution
 
 import sys
 import os.path
 import operator
+from queue import Queue
 
 #class to store proces information
 class Process:
@@ -61,6 +62,41 @@ def FirstComeFirstServedSort(batchFileData):
 
 	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
+def ShortestJobFirstSort(batchFileData):     #PID, Arrival Time, Burst Time, Priority
+	processes = []
+	processQueue = Queue()
+	executionList = []
+	for x in batchFileData:
+		tokens = x.split(', ')
+		tokens[3] = tokens[3].replace('\n', '')
+		processes.append(Process(int(tokens[0]), int(tokens[1]), int(tokens[2]), int(tokens[3])))
+	
+	#print(processes)
+	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.PID))
+
+	completionLeft = 0
+	index = -1
+	for x in sortedProcesses:
+		if(processQueue.qsize() == 0):		#inserting first item
+			print('Inserting First Item')
+			processQueue.put(x)
+			executionList.append(x)
+			index += 1
+		else:
+			completionLeft = executionList[index].burstTime - x.arrivalTime
+			print(completionLeft)
+			if(completionLeft < x.burstTime):
+				processQueue.put(x)
+			else:
+				executionList[index].burstTime = executionList[index].burstTime - x.arrivalTime
+				executionList.append(x)
+			index += 1
+
+	
+	while(processQueue.empty() != 1):		#check contents of queue
+		print(processQueue.get())
+	
+
 def PrioritySort(batchFileData):
 	processes = []
 	for x in batchFileData:
@@ -89,7 +125,6 @@ def PrioritySort(batchFileData):
 
 	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
-
 def main():
 
 	#check for correct number of arguments
@@ -105,14 +140,14 @@ def main():
 		print('Algorithm Options: FCFS, ShortestFirst, Priority')
 		return 0
 
-	#read contents of batch file
+	#READ FILE DATA
 	batchFile = sys.argv[1]
 	batchFile = open(sys.argv[1], 'r')
 	data = batchFile.readlines()
 	batchFile.close()
-	#print(data)		#check data read from file				PID, Arrival Time, Burst Time, Priority
+	#print(data)		#check data read from file
 
-	#execute sorting algorithms
+	#EXECUTE SORTING ALGORITHMS
 	if(sys.argv[2] == 'FCFS'):
 		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = FirstComeFirstServedSort(data)	#call FirstComeFirstServedSort
 		
@@ -135,8 +170,13 @@ def main():
 
 	elif(sys.argv[2] == 'ShortestFirst'):
 		#ShortestFirst stuff
-		print('You\'ve chosen ShortestFirst')
-	elif(sys.argv[2] == 'Priority'):				#tried to just copy FCFS, but avgWait seems to be incorrect
+		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = ShortestJobFirstSort(data)	#call FirstComeFirstServedSort
+
+
+
+
+
+	elif(sys.argv[2] == 'Priority'):
 		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = PrioritySort(data)	#call PrioritySort
 		
 		avgTurnaroundTime, TurnaroundTimes = AverageTurnaround(CompletionTimes, ArrivalTimes)
@@ -147,10 +187,6 @@ def main():
 		print('Arrival Times:', ArrivalTimes)			#checking results
 		print('Burst Times:', BurstTimes)				#checking results
 		print('Turnaround Times:', TurnaroundTimes)		#checking results
-
-	#idk if i need this
-		for j in data:
-			print(j, '(', CompletionTimes, ') (', TurnaroundTimes, ') (', WaitTimes, ')')
 
 		print('Priority Sort Statistics:')
 		print('PID ORDER OF EXECUTION')
