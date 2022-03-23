@@ -8,7 +8,8 @@
 import sys
 import os.path
 import operator
-from queue import Queue
+import copy
+from collections import deque
 
 #class to store proces information
 class Process:
@@ -34,13 +35,17 @@ def AverageWait(processTurnaroundTimes, processBurstTimes):
 	avgWaitTime = waitTime / len(processTurnaroundTimes)
 	return avgWaitTime, processWaitTimes
 
-def FirstComeFirstServedSort(batchFileData):
-	processes = []
+def processBatchData(batchFileData):
+	processList = []
 	for x in batchFileData:
 		tokens = x.split(', ')
 		tokens[3] = tokens[3].replace('\n', '')
-		processes.append(Process(int(tokens[0]), int(tokens[1]), int(tokens[2]), int(tokens[3])))
+		processList.append(Process(int(tokens[0]), int(tokens[1]), int(tokens[2]), int(tokens[3])))
+	return processList
+
+def FirstComeFirstServedSort(batchFileData):
 	
+	processes = processBatchData(batchFileData)
 	#print(processes)
 	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.PID))
 	
@@ -63,47 +68,67 @@ def FirstComeFirstServedSort(batchFileData):
 	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
 def ShortestJobFirstSort(batchFileData):     #PID, Arrival Time, Burst Time, Priority
-	processes = []
-	processQueue = Queue()
-	executionList = []
-	for x in batchFileData:
-		tokens = x.split(', ')
-		tokens[3] = tokens[3].replace('\n', '')
-		processes.append(Process(int(tokens[0]), int(tokens[1]), int(tokens[2]), int(tokens[3])))
-	
+	processes = processBatchData(batchFileData)
 	#print(processes)
-	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.PID))
+	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.PID))		#sort processes
+	# for x in sortedProcesses:
+	# 	processQueue.put(x)
 
-	completionLeft = 0
-	index = -1
-	for x in sortedProcesses:
-		if(processQueue.qsize() == 0):		#inserting first item
-			print('Inserting First Item')
-			processQueue.put(x)
-			executionList.append(x)
-			index += 1
-		else:
-			completionLeft = executionList[index].burstTime - x.arrivalTime
-			print(completionLeft)
-			if(completionLeft < x.burstTime):
-				processQueue.put(x)
-			else:
-				executionList[index].burstTime = executionList[index].burstTime - x.arrivalTime
-				executionList.append(x)
-			index += 1
+	readyQueue = deque()
+	executionList = []
+	tempList = []
+	numCompleted = 0
+	currentProcessBurst = 1000
+	time = 0
+	while(numCompleted != len(sortedProcesses)):
+		for x in sortedProcesses:			#insert processes that arrived in ready queue
+			if(x.arrivalTime == time):		#
+				readyQueue.append(x)		#
+
+		tempQueue = copy.deepcopy(readyQueue)	#copy ready queue into temp
+		for y in tempQueue:
+			tempList.append(y)
+
+		shortestBurst = min(tempList, key = lambda x: x.burstTime)
+		currentProcess = shortestBurst
+
+		if(currentProcess.burstTime < currentProcessBurst):
+			currentProcess.burstTime = currentProcess.burstTime - 1
+			currentProcessBurst = currentProcess.burstTime
+		time = time + 1
+
+		if(currentProcess.burstTime == 0):
+			numCompleted = numCompleted + 1
+		
+		
+
+
+#------------------------------#
+	# completionLeft = 0
+	# index = -1
+	# for x in sortedProcesses:
+	# 	if(processQueue.qsize() == 0):		#inserting first item
+	# 		print('Inserting First Item')
+	# 		processQueue.put(x)
+	# 		executionList.append(x)
+	# 		index += 1
+	# 	else:
+	# 		completionLeft = executionList[index].burstTime - x.arrivalTime
+	# 		print(completionLeft)
+	# 		if(completionLeft < x.burstTime):
+	# 			processQueue.put(x)
+	# 		else:
+	# 			executionList[index].burstTime = executionList[index].burstTime - x.arrivalTime
+	# 			executionList.append(x)
+	# 		index += 1
 
 	
-	while(processQueue.empty() != 1):		#check contents of queue
-		print(processQueue.get())
-	
+	# while(processQueue.empty() != 1):		#check contents of queue
+	# 	print(processQueue.get())
+#-------------------------------------------------------------------------------#	
 
 def PrioritySort(batchFileData):
-	processes = []
-	for x in batchFileData:
-		tokens = x.split(', ')
-		tokens[3] = tokens[3].replace('\n', '')
-		processes.append(Process(int(tokens[0]), int(tokens[1]), int(tokens[2]), int(tokens[3])))
-	
+	processes = processBatchData(batchFileData)
 	#print(processes)
 	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.priority, z.PID))
 	
@@ -125,9 +150,10 @@ def PrioritySort(batchFileData):
 
 	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
+
 def main():
 
-	#check for correct number of arguments
+	#CHECK COMMAND LINE ARGUMENTS
 	if(len(sys.argv) != 3):
 		print('[ERROR]: Incorrect number of arguments')
 		print('usage: batchSchedulingComparison.py <batchFile> <sortType>')
