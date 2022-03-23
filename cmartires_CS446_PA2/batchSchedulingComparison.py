@@ -8,7 +8,6 @@
 import sys
 import os.path
 import operator
-import copy
 from collections import deque
 
 #class to store proces information
@@ -18,6 +17,7 @@ class Process:
 		self.arrivalTime = arrivalTime
 		self.burstTime = burstTime
 		self.priority = priority
+		self.jobTime = burstTime
 	
 	def __repr__(self):
 		return '[' + str(self.PID) + ', ' + str(self.arrivalTime) + ', ' + str(self.burstTime) + ', ' + str(self.priority) + ']'
@@ -30,10 +30,9 @@ def AverageTurnaround(processCompletionTimes, processArrivalTimes):
 	
 def AverageWait(processTurnaroundTimes, processBurstTimes):
 	processWaitTimes = list(map(operator.sub, processTurnaroundTimes, processBurstTimes))
-	print('Process Wait Times: ', processWaitTimes)   #check results (remove after)
 	waitTime = sum(processWaitTimes)
 	avgWaitTime = waitTime / len(processTurnaroundTimes)
-	return avgWaitTime, processWaitTimes
+	return avgWaitTime
 
 def processBatchData(batchFileData):
 	processList = []
@@ -44,9 +43,7 @@ def processBatchData(batchFileData):
 	return processList
 
 def FirstComeFirstServedSort(batchFileData):
-	
 	processes = processBatchData(batchFileData)
-	#print(processes)
 	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.PID))
 	
 	PIDlist = []
@@ -67,69 +64,54 @@ def FirstComeFirstServedSort(batchFileData):
 
 	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
-def ShortestJobFirstSort(batchFileData):     #PID, Arrival Time, Burst Time, Priority
+def ShortestJobFirstSort(batchFileData):
 	processes = processBatchData(batchFileData)
-	#print(processes)
-	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.PID))		#sort processes
-	# for x in sortedProcesses:
-	# 	processQueue.put(x)
+	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.PID))
 
 	readyQueue = deque()
 	executionList = []
-	tempList = []
 	numCompleted = 0
-	currentProcessBurst = 1000
 	time = 0
+	prev = 0
+
+	PIDlist = []
+	ArrivalTimeList = []
+	BurstTimeList = []
+	completionTimeList = []
 	while(numCompleted != len(sortedProcesses)):
-		for x in sortedProcesses:			#insert processes that arrived in ready queue
-			if(x.arrivalTime == time):		#
-				readyQueue.append(x)		#
+		for x in sortedProcesses:			#insert processes that have arrived in ready queue
+			if(x.arrivalTime == time):
+				readyQueue.append(x)
 
-		tempQueue = copy.deepcopy(readyQueue)	#copy ready queue into temp
-		for y in tempQueue:
-			tempList.append(y)
-
-		shortestBurst = min(tempList, key = lambda x: x.burstTime)
+		shortestBurst = min(readyQueue, key = lambda x: x.burstTime)
 		currentProcess = shortestBurst
 
-		if(currentProcess.burstTime < currentProcessBurst):
-			currentProcess.burstTime = currentProcess.burstTime - 1
-			currentProcessBurst = currentProcess.burstTime
-		time = time + 1
+		if(currentProcess.PID != prev):
+			PIDlist.append(currentProcess.PID)
+		prev = shortestBurst.PID
 
-		if(currentProcess.burstTime == 0):
-			numCompleted = numCompleted + 1
-		
-		
+		currentProcess.burstTime -= 1		#simulate process execution
+		executionList.append(currentProcess)
+
+		if(currentProcess.burstTime == 0):	#process has completed
+			numCompleted += 1
+			readyQueue.remove(currentProcess)
+			ArrivalTimeList.append(currentProcess.arrivalTime)
+			BurstTimeList.append(currentProcess.jobTime)
+			completionTimeList.append(time + 1)
+
+		time += 1
+
+	# print(PIDlist)
+	# print(ArrivalTimeList)
+	# print(completionTimeList)
+	# print(BurstTimeList)
 
 
-#------------------------------#
-	# completionLeft = 0
-	# index = -1
-	# for x in sortedProcesses:
-	# 	if(processQueue.qsize() == 0):		#inserting first item
-	# 		print('Inserting First Item')
-	# 		processQueue.put(x)
-	# 		executionList.append(x)
-	# 		index += 1
-	# 	else:
-	# 		completionLeft = executionList[index].burstTime - x.arrivalTime
-	# 		print(completionLeft)
-	# 		if(completionLeft < x.burstTime):
-	# 			processQueue.put(x)
-	# 		else:
-	# 			executionList[index].burstTime = executionList[index].burstTime - x.arrivalTime
-	# 			executionList.append(x)
-	# 		index += 1
-
-	
-	# while(processQueue.empty() != 1):		#check contents of queue
-	# 	print(processQueue.get())
-#-------------------------------------------------------------------------------#	
+	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
 
 def PrioritySort(batchFileData):
 	processes = processBatchData(batchFileData)
-	#print(processes)
 	sortedProcesses = sorted(processes, key = lambda z: (z.arrivalTime, z.priority, z.PID))
 	
 	PIDlist = []
@@ -149,7 +131,6 @@ def PrioritySort(batchFileData):
 	# print(completionTimeList)
 
 	return PIDlist, completionTimeList, ArrivalTimeList, BurstTimeList
-
 
 def main():
 
@@ -171,56 +152,64 @@ def main():
 	batchFile = open(sys.argv[1], 'r')
 	data = batchFile.readlines()
 	batchFile.close()
-	#print(data)		#check data read from file
 
 	#EXECUTE SORTING ALGORITHMS
 	if(sys.argv[2] == 'FCFS'):
-		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = FirstComeFirstServedSort(data)	#call FirstComeFirstServedSort
+		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = FirstComeFirstServedSort(data)
 		
 		avgTurnaroundTime, TurnaroundTimes = AverageTurnaround(CompletionTimes, ArrivalTimes)
-		avgWaitTime, WaitTimes = AverageWait(TurnaroundTimes, BurstTimes)
+		avgWaitTime = AverageWait(TurnaroundTimes, BurstTimes)
 
-		print('PIDs:',PIDs)								#checking results(remove after)
-		print('Completion Times:', CompletionTimes)		#checking results
-		print('Arrival Times:', ArrivalTimes)			#checking results
-		print('Burst Times:', BurstTimes)				#checking results
-		print('Turnaround Times:', TurnaroundTimes)		#checking results
+		# print('PIDs:',PIDs)								#checking results(remove after)
+		# print('Completion Times:', CompletionTimes)		#checking results
+		# print('Arrival Times:', ArrivalTimes)			#checking results
+		# print('Burst Times:', BurstTimes)				#checking results
+		# print('Turnaround Times:', TurnaroundTimes)		#checking results
 
 		print('FCFS Sort Statistics:')
 		print('PID ORDER OF EXECUTION')
 		for i in PIDs:
 			print(i)
-		#print('Each Processes\'s Turnaround Time:', processTurnaroundTimes)
-		print('Average Process Turnaround Time:', avgTurnaroundTime)
-		print('Average Process Wait Time:', avgWaitTime)
+		print('Average Process Turnaround Time: {:0.2f}'. format(avgTurnaroundTime))
+		print('Average Process Wait Time: {:0.2f}'. format(avgWaitTime))
 
 	elif(sys.argv[2] == 'ShortestFirst'):
-		#ShortestFirst stuff
-		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = ShortestJobFirstSort(data)	#call FirstComeFirstServedSort
+		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = ShortestJobFirstSort(data)
 
+		avgTurnaroundTime, TurnaroundTimes = AverageTurnaround(CompletionTimes, ArrivalTimes)
+		avgWaitTime = AverageWait(TurnaroundTimes, BurstTimes)
+		
+		# print('PIDs:',PIDs)								#checking results(remove after)
+		# print('Completion Times:', CompletionTimes)		#checking results
+		# print('Arrival Times:', ArrivalTimes)			#checking results
+		# print('Burst Times:', BurstTimes)				#checking results
+		# print('Turnaround Times:', TurnaroundTimes)		#checking results
 
-
-
+		print('Shortest Job First Sort Statistics:')
+		print('PID ORDER OF EXECUTION')
+		for i in PIDs:
+			print(i)
+		print('Average Process Turnaround Time: {:0.2f}'. format(avgTurnaroundTime))
+		print('Average Process Wait Time: {:0.2f}'. format(avgWaitTime))
 
 	elif(sys.argv[2] == 'Priority'):
-		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = PrioritySort(data)	#call PrioritySort
+		PIDs, CompletionTimes, ArrivalTimes, BurstTimes = PrioritySort(data)
 		
 		avgTurnaroundTime, TurnaroundTimes = AverageTurnaround(CompletionTimes, ArrivalTimes)
-		avgWaitTime, WaitTimes = AverageWait(TurnaroundTimes, BurstTimes)
+		avgWaitTime = AverageWait(TurnaroundTimes, BurstTimes)
 
-		print('PIDs:',PIDs)								#checking results(remove after)
-		print('Completion Times:', CompletionTimes)		#checking results
-		print('Arrival Times:', ArrivalTimes)			#checking results
-		print('Burst Times:', BurstTimes)				#checking results
-		print('Turnaround Times:', TurnaroundTimes)		#checking results
+		# print('PIDs:',PIDs)								#checking results(remove after)
+		# print('Completion Times:', CompletionTimes)		#checking results
+		# print('Arrival Times:', ArrivalTimes)			#checking results
+		# print('Burst Times:', BurstTimes)				#checking results
+		# print('Turnaround Times:', TurnaroundTimes)		#checking results
 
 		print('Priority Sort Statistics:')
 		print('PID ORDER OF EXECUTION')
 		for i in PIDs:
 			print(i)
-		#print('Each Processes\'s Turnaround Time:', processTurnaroundTimes)
-		print('Average Process Turnaround Time:', avgTurnaroundTime)
-		print('Average Process Wait Time:', avgWaitTime)
+		print('Average Process Turnaround Time: {:0.2f}'. format(avgTurnaroundTime))
+		print('Average Process Wait Time: {:0.2f}'. format(avgWaitTime))
 
 if __name__ == '__main__':
 	main()
