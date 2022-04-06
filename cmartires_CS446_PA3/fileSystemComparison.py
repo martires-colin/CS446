@@ -11,6 +11,7 @@
 #
 
 import os
+import time
 
 def generateFiles(path, numOfFiles, start):
 	origin = os.getcwd()
@@ -84,8 +85,13 @@ def main():
 	generateFiles('/home/cmartires/singleRoot', 100, 0)					#generate 100 files in singleRoot
 	createDirectories('/home/cmartires/hierarchicalRoot', 10)			#generate directories?files within hierarchicalRoot
 
+	timeStartSR = time.time()
 	SRdata = traverseDirectory('/home/cmartires/singleRoot')			#traverse directories
+	timeEndSR = time.time()
+	
+	timeStartHR = time.time()
 	HRdata = traverseDirectory('/home/cmartires/hierarchicalRoot')
+	timeEndHR = time.time()
 
 	numSRfiles = writeDataFile(SRdata, 'singleLevelFiles.txt', '/home/cmartires/singleRoot')						#write files with directory info
 	numHRfiles = writeDataFile(HRdata, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot')
@@ -93,11 +99,16 @@ def main():
 	avgSizeSR = calculateAvgSize(SRdata)
 	avgSizeHR = calculateAvgSize(HRdata)
 
+	traversalTimeSR = (timeEndSR - timeStartSR) * 1000
+	traversalTimeHR = (timeEndHR - timeStartHR) * 1000
+
 	print('Number of files in singleRoot:', numSRfiles)
 	print('Average File Size in singleRoot: %0.2f' % avgSizeSR)
-	print('Number of files in hierarchicalRoot:', numHRfiles)
+	print('\nNumber of files in hierarchicalRoot:', numHRfiles)
 	print('Average File Size in hierarchicalRoot: %0.2f' % avgSizeHR)
 
+	print('\nsingleRoot traversal time: %0.2f ms' % traversalTimeSR)
+	print('hierarchicalRoot traversal time: %0.2f ms' % traversalTimeHR)
 
 if __name__ == '__main__':
 	main()
