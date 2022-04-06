@@ -1,14 +1,22 @@
-#Program Name: fileSystemComparison.py
-#Author: Colin Martires
-#Purpose: Programming Assignment 3
-#This program will compare and contrast single-level and heirarchical file
-#directories. The program will determine the size difference as well as the
-#traversal time between the two types of directories.
+# Program Name: fileSystemComparison.py
+# Author: Colin Martires
+# Purpose: Programming Assignment 3
+# This program will compare and contrast single-level and heirarchical file
+# directories. The program will determine the size difference as well as the
+# traversal time between the two types of directories.
 
-# COMPARE THE THINGIES
+# -----singleLevelFiles.txt vs hierarchicalFiles.txt-----
+# Both text files contain 100 files with a size of 0 bytes. The difference is
+# that in hierarchicalRoot, the files are sorted into 10 subdirectories each containing
+# 10 of the 100 total files generated. This means that when printing the file data to
+# hierarchicalFiles.txt, the 10 subdirectories will be included. singleLevelFiles.txt
+# contains 100 files of size 0 bytes while hierarchicalFiles.txt contains 100 files of
+# size 0 bytes and 10 files of size 4096 bytes. 
 
-# To Do
-#
+# -----How can we implement something similar to a hierarchical file system?-----
+
+
+
 
 import os
 import time
@@ -44,19 +52,16 @@ def traverseDirectory(filePath):
 	dirs = next(os.walk(filePath))[1]
 	for dirName in dirs:
 		fileSize = os.path.getsize(filePath + '/' + dirName)
-		# print(dirName, '-', fileSize)
 		dirInfo[dirName] = fileSize
 	
 		files = next(os.walk(filePath + '/' + dirName))[2]
 		for fileName in files:
 			fileSize = os.path.getsize(filePath + '/' + dirName + '/' + fileName)
-			# print(fileName, '-', fileSize)
 			dirInfo[fileName] = fileSize
 
 	files = next(os.walk(filePath))[2]
 	for fileName in files:
 		fileSize = os.path.getsize(filePath + '/' + fileName)
-		# print(fileName, '-', fileSize)
 		dirInfo[fileName] = fileSize
 
 	return dirInfo
@@ -83,32 +88,34 @@ def main():
 	os.makedirs('/home/cmartires/hierarchicalRoot', exist_ok=True)		#create hierarchicalRoot directory
 
 	generateFiles('/home/cmartires/singleRoot', 100, 0)					#generate 100 files in singleRoot
-	createDirectories('/home/cmartires/hierarchicalRoot', 10)			#generate directories?files within hierarchicalRoot
+	createDirectories('/home/cmartires/hierarchicalRoot', 10)			#generate directories and files within hierarchicalRoot
 
-	timeStartSR = time.time()
-	SRdata = traverseDirectory('/home/cmartires/singleRoot')			#traverse directories
-	timeEndSR = time.time()
+	timeStartSR = time.time()											#start timer for singleRoot traversal
+	SRdata = traverseDirectory('/home/cmartires/singleRoot')			#traverse singleRoot
+	timeEndSR = time.time()												#end timer for singleRoot traversal
 	
-	timeStartHR = time.time()
-	HRdata = traverseDirectory('/home/cmartires/hierarchicalRoot')
-	timeEndHR = time.time()
+	timeStartHR = time.time()											#start timer for hierarchicalRoot traversal
+	HRdata = traverseDirectory('/home/cmartires/hierarchicalRoot')		#traverse hierarchicalRoot
+	timeEndHR = time.time()												#end timer for hierarchical traversal
 
-	numSRfiles = writeDataFile(SRdata, 'singleLevelFiles.txt', '/home/cmartires/singleRoot')						#write files with directory info
+	numSRfiles = writeDataFile(SRdata, 'singleLevelFiles.txt', '/home/cmartires/singleRoot')		#write data to file					#write files with directory info
 	numHRfiles = writeDataFile(HRdata, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot')
 
-	avgSizeSR = calculateAvgSize(SRdata)
+	avgSizeSR = calculateAvgSize(SRdata)								#calculate average file size
 	avgSizeHR = calculateAvgSize(HRdata)
 
-	traversalTimeSR = (timeEndSR - timeStartSR) * 1000
+	traversalTimeSR = (timeEndSR - timeStartSR) * 1000					#calculate traversal time
 	traversalTimeHR = (timeEndHR - timeStartHR) * 1000
 
-	print('Number of files in singleRoot:', numSRfiles)
-	print('Average File Size in singleRoot: %0.2f' % avgSizeSR)
-	print('\nNumber of files in hierarchicalRoot:', numHRfiles)
-	print('Average File Size in hierarchicalRoot: %0.2f' % avgSizeHR)
-
-	print('\nsingleRoot traversal time: %0.2f ms' % traversalTimeSR)
-	print('hierarchicalRoot traversal time: %0.2f ms' % traversalTimeHR)
+	print('singleRoot Statistics:')
+	print('Number of Files:', numSRfiles)
+	print('Average File Size: %0.2f' % avgSizeSR)
+	print('Traversal Time: %0.2f ms' % traversalTimeSR)
+	
+	print('\nhierarchicalRoot Statistics:')
+	print('Number of Files:', numHRfiles)
+	print('Average File Size: %0.2f' % avgSizeHR)
+	print('Traversal Time: %0.2f ms' % traversalTimeHR)
 
 if __name__ == '__main__':
 	main()
