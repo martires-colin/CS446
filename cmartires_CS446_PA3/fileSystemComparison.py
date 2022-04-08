@@ -71,7 +71,7 @@ def traverseDirectory(filePath):
 def writeDataFile(data, fileName, destination):
 	origin = os.getcwd()
 	os.chdir(destination)
-	f = open(fileName, "w")
+	f = open(fileName, "a")
 	for key, value in data.items():
 		f.write('File Name: %s\nFile Size: %s bytes\n\n' % (key,value))
 	f.close()
@@ -101,6 +101,7 @@ def main():
 
 	writeDataFile(SRFileData, 'singleLevelFiles.txt', '/home/cmartires/singleRoot')		#write data to file					#write files with directory info
 	writeDataFile(HRFileData, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot')
+	writeDataFile(HRDirData, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot')
 
 	avgFileSizeSR = calculateAvgSize(SRFileData)								#calculate average file size
 	avgFileSizeHR = calculateAvgSize(HRFileData)
