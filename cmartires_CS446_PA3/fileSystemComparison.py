@@ -14,10 +14,17 @@
 # size 0 bytes and 10 files of size 4096 bytes. 
 
 # -----How can we implement something similar to a hierarchical file system?-----
-
-
-
-
+# Since we can't have subdirectories in single-level file system, a file path like
+# /home/sarad/Downloads/test.txt would not exist. A way to approximate the file path
+# is to translate the file path into a file name. The "/" is an illegal character in file
+# naming conventions, so I would replace all the "/" with "-". What we end up with is 
+# home-sarad-Downloads-test.txt, which would be an acceptable file in a single-level file
+# directory. To mimic the organization of a hierarchical file system, we can use the 
+# glob module. Using the glob function allows us to search for specific files with names
+# that match a user-defined string. For example, executing glob.glob("home-sarad-Downloads-*.txt")
+# would return all .txt files containing "home-sarad-Downloads-", which mimics the function 
+# of changing into the Downloads directory. In summary, by stating the file path within
+# the file name, we can organize files and filter through them using the glob function. 
 
 import os
 import time
