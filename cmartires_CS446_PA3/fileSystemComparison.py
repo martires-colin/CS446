@@ -5,7 +5,7 @@
 # directories. The program will determine the size difference as well as the
 # traversal time between the two types of directories.
 
-# -----singleLevelFiles.txt vs hierarchicalFiles.txt-----
+# -------------singleLevelFiles.txt vs hierarchicalFiles.txt---------------------------
 # Both text files contain 100 files with a size of 0 bytes. The difference is
 # that in hierarchicalRoot, the files are sorted into 10 subdirectories each containing
 # 10 of the 100 total files generated. This means that when printing the file data to
@@ -13,7 +13,7 @@
 # contains 100 files of size 0 bytes while hierarchicalFiles.txt contains 100 files of
 # size 0 bytes and 10 files of size 4096 bytes. 
 
-# -----How can we implement something similar to a hierarchical file system?-----
+# -------How can we implement something similar to a hierarchical file system?---------
 # Since we can't have subdirectories in single-level file system, a file path like
 # /home/sarad/Downloads/test.txt would not exist. A way to approximate the file path
 # is to translate the file path into a file name. The "/" is an illegal character in file
@@ -75,10 +75,10 @@ def traverseDirectory(filePath):
 
 	return fileInfo, dirInfo
 
-def writeDataFile(data, fileName, destination):
+def writeDataFile(data, fileName, destination, fileConfig):
 	origin = os.getcwd()
 	os.chdir(destination)
-	f = open(fileName, "a")
+	f = open(fileName, fileConfig)
 	for key, value in data.items():
 		f.write('File Name: %s\nFile Size: %s bytes\n\n' % (key,value))
 	f.close()
@@ -92,31 +92,38 @@ def calculateAvgSize(data):
 
 def main():
 
-	os.makedirs('/home/cmartires/singleRoot', exist_ok=True)			#create singleRoot directory
-	os.makedirs('/home/cmartires/hierarchicalRoot', exist_ok=True)		#create hierarchicalRoot directory
+	# create directories
+	os.makedirs('/home/cmartires/singleRoot', exist_ok=True)
+	os.makedirs('/home/cmartires/hierarchicalRoot', exist_ok=True)
 
-	generateFiles('/home/cmartires/singleRoot', 100, 0)					#generate 100 files in singleRoot
-	createDirectories('/home/cmartires/hierarchicalRoot', 10)			#generate directories and files within hierarchicalRoot
+	# generate files (createDirectories generates files within directories)
+	generateFiles('/home/cmartires/singleRoot', 100, 0)
+	createDirectories('/home/cmartires/hierarchicalRoot', 10)
 
-	timeStartSR = time.time()											#start timer for singleRoot traversal
-	SRFileData, SRDirData = traverseDirectory('/home/cmartires/singleRoot')			#traverse singleRoot
-	timeEndSR = time.time()												#end timer for singleRoot traversal
+	# traverse directories, record traversal times
+	timeStartSR = time.time()
+	SRFileData, SRDirData = traverseDirectory('/home/cmartires/singleRoot')
+	timeEndSR = time.time()
 	
-	timeStartHR = time.time()											#start timer for hierarchicalRoot traversal
-	HRFileData, HRDirData = traverseDirectory('/home/cmartires/hierarchicalRoot')		#traverse hierarchicalRoot
-	timeEndHR = time.time()												#end timer for hierarchical traversal
+	timeStartHR = time.time()
+	HRFileData, HRDirData = traverseDirectory('/home/cmartires/hierarchicalRoot')
+	timeEndHR = time.time()
 
-	writeDataFile(SRFileData, 'singleLevelFiles.txt', '/home/cmartires/singleRoot')		#write data to file					#write files with directory info
-	writeDataFile(HRFileData, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot')
-	writeDataFile(HRDirData, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot')
+	# write files containing file info, store in singleRoot and hierarchicalRoot
+	writeDataFile(SRFileData, 'singleLevelFiles.txt', '/home/cmartires/singleRoot', 'w')
+	writeDataFile(HRFileData, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot', 'w')
+	writeDataFile(HRDirData, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot', 'a')
 
-	avgFileSizeSR = calculateAvgSize(SRFileData)								#calculate average file size
+	# calculate average file size
+	avgFileSizeSR = calculateAvgSize(SRFileData)
 	avgFileSizeHR = calculateAvgSize(HRFileData)
 	avgDirSizeHR = calculateAvgSize(HRDirData)
 
-	traversalTimeSR = (timeEndSR - timeStartSR) * 1000					#calculate traversal time
+	# calculate traversal time in milliseconds
+	traversalTimeSR = (timeEndSR - timeStartSR) * 1000
 	traversalTimeHR = (timeEndHR - timeStartHR) * 1000
 
+	# display statistics to terminal
 	print('singleRoot Statistics:')
 	print('Number of Files:', len(SRFileData))
 	print('Average File Size: %0.2f bytes' % avgFileSizeSR)
