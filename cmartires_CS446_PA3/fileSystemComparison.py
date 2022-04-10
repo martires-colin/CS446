@@ -93,26 +93,26 @@ def calculateAvgSize(data):
 def main():
 
 	# create directories
-	os.makedirs('/home/cmartires/singleRoot', exist_ok=True)
-	os.makedirs('/home/cmartires/hierarchicalRoot', exist_ok=True)
+	os.makedirs(os.path.expanduser('~/singleRoot'), exist_ok=True)
+	os.makedirs(os.path.expanduser('~/hierarchicalRoot'), exist_ok=True)
 
 	# generate files (createDirectories generates files within directories)
-	generateFiles('/home/cmartires/singleRoot', 100, 0)
-	createDirectories('/home/cmartires/hierarchicalRoot', 10)
+	generateFiles(os.path.expanduser('~/singleRoot'), 100, 0)
+	createDirectories(os.path.expanduser('~/hierarchicalRoot'), 10)
 
 	# traverse directories, record traversal times
 	timeStartSR = time.time()
-	SRFileData, SRDirData = traverseDirectory('/home/cmartires/singleRoot')
+	SRFileData, SRDirData = traverseDirectory(os.path.expanduser('~/singleRoot'))
 	timeEndSR = time.time()
 	
 	timeStartHR = time.time()
-	HRFileData, HRDirData = traverseDirectory('/home/cmartires/hierarchicalRoot')
+	HRFileData, HRDirData = traverseDirectory(os.path.expanduser('~/hierarchicalRoot'))
 	timeEndHR = time.time()
 
 	# write files containing file info, store in singleRoot and hierarchicalRoot
-	writeDataFile(SRFileData, 'singleLevelFiles.txt', '/home/cmartires/singleRoot', 'w')
-	writeDataFile(HRFileData, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot', 'w')
-	writeDataFile(HRDirData, 'hierarchicalFiles.txt', '/home/cmartires/hierarchicalRoot', 'a')
+	writeDataFile(SRFileData, 'singleLevelFiles.txt', os.path.expanduser('~/singleRoot'), 'w')
+	writeDataFile(HRFileData, 'hierarchicalFiles.txt', os.path.expanduser('~/hierarchicalRoot'), 'w')
+	writeDataFile(HRDirData, 'hierarchicalFiles.txt', os.path.expanduser('~/hierarchicalRoot'), 'a')
 
 	# calculate average file size
 	avgFileSizeSR = calculateAvgSize(SRFileData)
