@@ -1,3 +1,4 @@
 Pillow
 scipy
 numpy
+pyOpenSSL
