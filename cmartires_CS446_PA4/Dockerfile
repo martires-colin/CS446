@@ -1,6 +1,6 @@
 FROM python:latest
 
-WORKDIR ~/CS446/pas/cmartires_CS446_PA4
+WORKDIR /cmartires_CS446_PA4
 
 COPY pythonCode2.py ./
 
