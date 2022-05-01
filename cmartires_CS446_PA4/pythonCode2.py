@@ -54,6 +54,6 @@ if not exists(C_F) or not exists(K_F):
     open(C_F, "wb").write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     open(K_F, "wb").write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
 
-    os.system("openssl rsa -in cmartires_privateKey.pem -out cmartires_publicKey.pem")
+    os.system("openssl rsa -in cmartires_privateKey.pem -pubout -out cmartires_publicKey.pem")
 
 #modify this code so that it also generates self signed certificate and keys
