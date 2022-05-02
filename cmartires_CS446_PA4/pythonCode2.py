@@ -47,7 +47,7 @@ if not exists(C_F) or not exists(K_F):
     cert.get_subject().CN = gethostname()
     cert.set_serial_number(42)
     cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(156780000)
+    cert.gmtime_adj_notAfter(157680000)
     cert.set_pubkey(k)
     cert.set_issuer(cert.get_subject())
     cert.sign(k, 'sha512')
